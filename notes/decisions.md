@@ -147,3 +147,7 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
   for monocular depth. Limit now 0.03 + 0.05 * median depth.
   Result: 11 -> 7 segments, 42 odometry edges over 51 keyframes.
 - Remaining failures are close-ups (0.24-0.4 m from a wall): step 2.
+- Step 2: skip keyframe candidates with median MoGe depth < 0.5 m (retry every
+  5 frames, each check is a MoGe run). Stand-in: 51 -> 45 keyframes,
+  7 -> 6 segments, 38 odometry edges. Modest: the remaining breaks are not
+  close-ups. Protocol already says walk ~1 m from walls.

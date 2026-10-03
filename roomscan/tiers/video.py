@@ -28,14 +28,26 @@ KEEP_FRAC = 0.30      # new keyframe when < 30% of seeded corners survive
 MIN_GAP_S, MAX_GAP_S = 0.3, 2.0
 MIN_TRACKS = 40       # below this, take the keyframe even if the frame is blurry
 BLUR_MIN = 40.0
+MIN_DEPTH = 0.5       # m; closer keyframes are where KLT and ICP both fail (D16)
+CLOSE_RETRY = 5       # frames to wait after rejecting a close-up (each check is a MoGe run)
 MAX_KEYFRAMES = 400   # ~10 s each with MoGe-L on CPU (notes D13)
+
+
+def too_close(mv, min_depth: float = MIN_DEPTH) -> bool:
+    """True if the frame mostly shows a surface closer than min_depth (median
+    range over valid pixels), or has no valid geometry at all."""
+    P = mv.points[mv.mask]
+    if len(P) == 0:
+        return True
+    return float(np.median(np.linalg.norm(P, axis=1))) < min_depth
 
 
 def track_keyframes(path: Path):
     """One pass over the clip: KLT-track corners frame to frame and start a new
     keyframe when tracking degrades (tracked < KEEP_FRAC of the seeded corners),
     after MAX_GAP_S at most, never closer than MIN_GAP_S. Blurry candidates are
-    skipped (the next sharp frame becomes the keyframe).
+    skipped (the next sharp frame becomes the keyframe) unless tracking is dying;
+    close-ups (median depth < MIN_DEPTH) are skipped, retried every CLOSE_RETRY frames.
 
     Returns keyframes [(frame_idx, rgb)] and, per consecutive pair, the tracked
     pixel correspondences at MoGe inference resolution."""
@@ -46,6 +58,7 @@ def track_keyframes(path: Path):
               criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01))
     kfs, tracks = [], []
     prev_g, p0, p, n_seed, last_kf = None, None, None, 0, -10 ** 9
+    retry_at = 0           # next frame index allowed to be checked after a close-up
     i = 0
     while True:
         ok, img = cap.read()
@@ -64,7 +77,11 @@ def track_keyframes(path: Path):
         dying = p is not None and len(p) < MIN_TRACKS
         # prefer sharp keyframes, but never let tracking die waiting for one:
         # MoGe tolerates mild blur far better than odometry tolerates a gap
-        if (not kfs and sharp) or (kfs and degraded and gap >= MIN_GAP_S and (sharp or dying)):
+        want_kf = (not kfs and sharp) or (kfs and degraded and gap >= MIN_GAP_S and (sharp or dying))
+        if want_kf and i >= retry_at and too_close(mono.infer(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))):
+            retry_at = i + CLOSE_RETRY          # keep tracking; try again a bit later
+            want_kf = False
+        if want_kf and i >= retry_at:
             if kfs:
                 tracks.append((p0.reshape(-1, 2).copy(), p.reshape(-1, 2).copy()))
             kfs.append((i, cv2.cvtColor(img, cv2.COLOR_BGR2RGB)))
