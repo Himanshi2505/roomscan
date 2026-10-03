@@ -49,6 +49,13 @@ class WallObs:
     depth: float              # camera -> facing wall
     ceiling: float | None     # floor -> ceiling
     openings: list = field(default_factory=list)   # (kind, s_lo, s_hi, sig, head, sill), s from left corner
+    view: object = None
+    M: np.ndarray = None      # gravity frame -> Manhattan-aligned photo frame
+    axis: str = "x"
+    pos: float = 0.0          # facing wall coordinate in the photo frame
+    lo: float = 0.0           # left / right corner coordinates along the wall
+    hi: float = 0.0
+    floor_y: float = 0.0
 
 
 def observe(v: photo.View) -> WallObs | None:
@@ -86,7 +93,27 @@ def observe(v: photo.View) -> WallObs | None:
     ops = []
     for o in edge_openings(c, e, 0, fl.y):
         ops.append((o.kind, o.s_lo - lo, o.s_hi - lo, o.width_sigma, o.head, o.sill))
-    return WallObs(v.name, float(hi - lo), float(sig), complete, float(abs(wall.pos)), H, ops)
+    return WallObs(v.name, float(hi - lo), float(sig), complete, float(abs(wall.pos)), H, ops,
+                   v, M, ax, float(wall.pos), float(lo), float(hi), float(fl.y))
+
+
+def _place(o: WallObs, p: np.ndarray, q: np.ndarray, outward) -> np.ndarray:
+    """4x4 taking photo o's gravity frame into the room frame, so that its facing
+    wall lands on room side p->q (floor at y=0)."""
+    k = 0 if o.axis == "x" else 2
+    f_loc = np.zeros(2)
+    f_loc[0 if o.axis == "x" else 1] = np.sign(o.pos)
+    n = np.asarray(outward, float)
+    ang = np.arctan2(n[1], n[0]) - np.arctan2(f_loc[1], f_loc[0])
+    c, s_ = np.cos(ang), np.sin(ang)
+    R2 = np.array([[c, -s_], [s_, c]])
+    corner = lambda along: np.array([o.pos, along]) if o.axis == "x" else np.array([along, o.pos])
+    c_lo, c_hi = R2 @ corner(o.lo), R2 @ corner(o.hi)
+    t = (p - c_lo) if np.dot(c_hi - c_lo, q - p) > 0 else (q - c_lo)
+    T = np.eye(4)
+    T[0, 0], T[0, 2], T[2, 0], T[2, 2] = R2[0, 0], R2[0, 1], R2[1, 0], R2[1, 1]
+    T[0, 3], T[2, 3], T[1, 3] = t[0], t[1], -o.floor_y
+    return T @ o.M
 
 
 def _combine(vals: list[tuple[float, float]]) -> tuple[float, float]:
@@ -143,6 +170,7 @@ def room_plan(views: list[photo.View], room_id: str = "R1") -> tuple[dict | None
                       "measured": True, "openings": []})
     for k, o in enumerate(obs[:4]):
         p, q = sides[k]
+        o.view.T, o.view.scale = _place(o, p, q, outward[k]), 1.0
         d = (q - p) / max(np.linalg.norm(q - p), 1e-9)
         for kind, s0, s1, sg, head, sill in o.openings:
             oid = f"{room_id}.O{len(openings) + 1}"

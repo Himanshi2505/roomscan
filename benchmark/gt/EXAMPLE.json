@@ -1,0 +1,23 @@
+{
+  "property": "EXAMPLE",
+  "measured_with": "laser measurer model (+-1.5 mm) + 5 m tape; date",
+  "note": "Walls clockwise as seen from above, starting anywhere. Lengths are interior, face to face at ~1 m height. Openings: clear width jamb to jamb. Copy this file to <property>.json.",
+  "rooms": {
+    "kitchen": {
+      "walls": [{"id": "N", "length": 3.412}, {"id": "E", "length": 2.905},
+                {"id": "S", "length": 3.408}, {"id": "W", "length": 2.911}],
+      "ceiling_height": 2.612,
+      "openings": [{"wall": "S", "kind": "door", "width": 0.812},
+                   {"wall": "N", "kind": "window", "width": 1.204}],
+      "damage": [{"wall": "E", "class": "water_stain", "width": 0.30, "height": 0.22, "bottom": 0.04}]
+    },
+    "hall": {
+      "walls": [{"id": "N", "length": 1.105}, {"id": "E", "length": 4.020},
+                {"id": "S", "length": 1.101}, {"id": "W", "length": 4.018}],
+      "ceiling_height": 2.608,
+      "openings": [{"wall": "N", "kind": "door", "width": 0.812}]
+    }
+  },
+  "adjacency": [["hall", "kitchen"]],
+  "footprint_area": 14.33
+}

@@ -39,23 +39,39 @@ def _photo(capture: Path, timing: dict, warnings: list) -> dict:
     folders = sorted(d for d in capture.iterdir() if d.is_dir())
     t = time.perf_counter()
     recons, plans, Ms, names = [], [], [], []
+    from roomscan.tiers import photo_layout
     for k, d in enumerate(folders):
         rec = photo.reconstruct_room(d, fid0=1000 * k)
-        if rec.cloud is None or len(rec.cloud) < 1000:
-            warnings.append(f"{d.name}: no usable reconstruction, room skipped")
-            continue
-        M = yaw_matrix(manhattan_yaw(rec.cloud))
-        try:
-            pl = build_plan(rec.cloud.transformed(M), "photo", single_room=True)
-        except RuntimeError as e:
-            warnings.append(f"{d.name}: {e}")
-            continue
+        n_all = len(rec.views) + len(rec.unregistered)
+        if len(rec.views) >= max(3, n_all // 2):
+            # enough texture: fused multi-view reconstruction, any rectilinear shape
+            M = yaw_matrix(manhattan_yaw(rec.cloud))
+            try:
+                pl = build_plan(rec.cloud.transformed(M), "photo", single_room=True)
+            except RuntimeError as e:
+                warnings.append(f"{d.name}: {e}")
+                continue
+            dv = (rec.views, M)
+        else:
+            # textureless room: one wall per photo, rectangle (notes D11)
+            allv = sorted(rec.views + rec.unregistered, key=lambda v: v.name)
+            pl, notes = photo_layout.room_plan(allv)
+            warnings += [f"{d.name}: {x}" for x in notes]
+            if pl is None:
+                warnings.append(f"{d.name}: no wall could be measured, room skipped")
+                continue
+            warnings.append(f"{d.name}: layout path (rectangle from {pl['wall_photos']} wall photos)")
+            rec.views = [v for v in allv if v.T is not None and v.T.shape == (4, 4)
+                         and not np.allclose(v.T, np.eye(4))]
+            rec.unregistered = [v for v in allv if v not in rec.views]
+            M = np.eye(4)
+            dv = (rec.views, M)
         if not pl["rooms"]:
             warnings.append(f"{d.name}: no room footprint found")
             continue
         pl["rooms"] = [max(pl["rooms"], key=lambda r: r["floor_area"]["value"])]
         from roomscan import damage as DM
-        regs = DM.detect(DM.mono_views(rec.views, M), pl, pl["levels"]["floor_y"],
+        regs = DM.detect(DM.mono_views(*dv), pl, pl["levels"]["floor_y"],
                          pl["levels"]["ceiling_y"], min_views=1)
         pl["damage"], pl["concealed_flags"], pl["scope"] = DM.build_outputs(regs, pl, "photo")
         recons.append(rec); plans.append(pl); Ms.append(M); names.append(d.name)

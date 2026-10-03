@@ -18,6 +18,7 @@ CACHE = ROOT / "out" / "cache" / "moge"
 WEIGHTS = {"small": ROOT / "weights" / "small" / "model.pt",
            "large": ROOT / "weights" / "large" / "model.pt"}
 MODEL_SIZE = "large"
+RES_LEVEL = 0          # MoGe token budget 0..9; 0 = fastest (see notes D13)
 INFER_LONG_SIDE = 640
 
 _model = None
@@ -54,9 +55,12 @@ def resize_long(rgb: np.ndarray, long_side: int = INFER_LONG_SIDE) -> np.ndarray
     return cv2.resize(rgb, (round(w * s), round(h * s)), interpolation=cv2.INTER_AREA)
 
 
-def infer(rgb: np.ndarray) -> MonoView:
+def infer(rgb: np.ndarray, fov_x_deg: float | None = None) -> MonoView:
+    """fov_x_deg: known horizontal field of view (from EXIF); conditions MoGe's
+    geometry instead of letting it guess the lens (see notes D14)."""
     rgb = resize_long(rgb)
-    key = hashlib.sha1(rgb.tobytes() + f"{MODEL_SIZE}-v1".encode()).hexdigest()
+    fov_tag = f"-fov{fov_x_deg:.2f}" if fov_x_deg else ""
+    key = hashlib.sha1(rgb.tobytes() + f"{MODEL_SIZE}-L{RES_LEVEL}{fov_tag}-v1".encode()).hexdigest()
     f = CACHE / f"{key}.npz"
     if f.exists():
         d = np.load(f)
@@ -64,7 +68,8 @@ def infer(rgb: np.ndarray) -> MonoView:
     import torch
     m = _load()
     with torch.no_grad():
-        o = m.infer(torch.tensor(rgb / 255.0, dtype=torch.float32).permute(2, 0, 1), use_fp16=False)
+        o = m.infer(torch.tensor(rgb / 255.0, dtype=torch.float32).permute(2, 0, 1),
+                    resolution_level=RES_LEVEL, fov_x=fov_x_deg, use_fp16=False)
     h, w = rgb.shape[:2]
     K = o["intrinsics"].numpy().copy()
     K[0] *= w

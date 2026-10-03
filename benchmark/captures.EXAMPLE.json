@@ -1,0 +1,12 @@
+[
+  {"id": "flat1_lidar_a", "tier": "lidar", "path": "data/raw/flat1/lidar_a", "gt": "flat1",
+   "room_map": {"R1": "kitchen", "R2": "hall"}},
+  {"id": "flat1_lidar_b", "tier": "lidar", "path": "data/raw/flat1/lidar_b", "gt": "flat1",
+   "room_map": {"R1": "kitchen", "R2": "hall"}, "repeat_of": "flat1_lidar_a"},
+  {"id": "flat1_lidar_a_nodrift", "tier": "lidar", "path": "data/raw/flat1/lidar_a", "gt": "flat1",
+   "room_map": {"R1": "kitchen", "R2": "hall"}, "no_drift_ablation": true},
+  {"id": "flat1_video", "tier": "video", "path": "data/raw/flat1/IMG_0420.MOV", "gt": "flat1",
+   "room_map": {"R1": "kitchen", "R2": "hall"}},
+  {"id": "flat1_photo", "tier": "photo", "path": "data/raw/flat1/photos", "gt": "flat1",
+   "room_map": {"01_kitchen.R1": "kitchen", "02_hall.R1": "hall"}}
+]
