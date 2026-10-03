@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+# raw captures are large; fetched/copied by script, never committed
+data/raw/
+single_room/
+single_scan_floor_only/
+single_scan_with_ceiling/
+out/
+weights/
