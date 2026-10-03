@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/roomscan/plan.schema.json",
+  "title": "RoomScan capture result",
+  "description": "One capture in, one result out. All lengths in metres, areas in m2, plan coordinates are a gravity-aligned top-down frame (x, z). Every measurement carries a 90% interval.",
+  "type": "object",
+  "required": ["schema_version", "capture", "tier", "calibrated", "rooms", "adjacency", "footprint_area", "damage", "concealed_flags", "scope", "drift", "timing_s", "warnings"],
+  "$defs": {
+    "measure": {
+      "type": "object", "required": ["value", "sigma", "ci90"],
+      "properties": {
+        "value": {"type": "number"}, "sigma": {"type": "number", "minimum": 0},
+        "ci90": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}
+      }
+    },
+    "measure_or_null": {"oneOf": [{"$ref": "#/$defs/measure"}, {"type": "null"}]},
+    "xy": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}
+  },
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "capture": {"type": "object", "required": ["id", "path"],
+      "properties": {"id": {"type": "string"}, "path": {"type": "string"}, "device": {"type": ["string", "null"]}, "n_inputs": {"type": "integer"}}},
+    "tier": {"enum": ["lidar", "video", "photo"]},
+    "calibrated": {"type": "boolean", "description": "false = interval scale factors are priors, not yet fitted on ground truth"},
+    "footprint_area": {"$ref": "#/$defs/measure"},
+    "rooms": {"type": "array", "items": {"type": "object",
+      "required": ["id", "name", "polygon", "floor_area", "ceiling_height", "walls", "openings"],
+      "properties": {
+        "id": {"type": "string"}, "name": {"type": "string"},
+        "polygon": {"type": "array", "items": {"$ref": "#/$defs/xy"}, "minItems": 3},
+        "floor_area": {"$ref": "#/$defs/measure"},
+        "ceiling_height": {"$ref": "#/$defs/measure_or_null"},
+        "ceiling_observed": {"type": "boolean"},
+        "walls": {"type": "array", "items": {"type": "object",
+          "required": ["id", "start", "end", "length", "height", "measured", "openings"],
+          "properties": {"id": {"type": "string"}, "start": {"$ref": "#/$defs/xy"}, "end": {"$ref": "#/$defs/xy"},
+            "length": {"$ref": "#/$defs/measure"}, "height": {"$ref": "#/$defs/measure_or_null"},
+            "measured": {"type": "boolean", "description": "true = edge lies on an observed wall face; false = virtual (open-plan cut)"},
+            "openings": {"type": "array", "items": {"type": "string"}}}}},
+        "openings": {"type": "array", "items": {"type": "object",
+          "required": ["id", "kind", "wall_id", "width", "center", "connects_to"],
+          "properties": {"id": {"type": "string"}, "kind": {"enum": ["door", "window", "passage"]},
+            "wall_id": {"type": "string"}, "width": {"$ref": "#/$defs/measure"},
+            "height": {"$ref": "#/$defs/measure_or_null"}, "sill": {"$ref": "#/$defs/measure_or_null"},
+            "center": {"$ref": "#/$defs/xy"}, "outward": {"$ref": "#/$defs/xy"},
+            "connects_to": {"type": ["string", "null"]}}}}
+      }}},
+    "adjacency": {"type": "array", "items": {"type": "object", "required": ["rooms", "via", "kind"],
+      "properties": {"rooms": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 2},
+        "via": {"type": ["string", "null"]}, "kind": {"enum": ["door", "passage", "window", "open"]}}}},
+    "damage": {"type": "array", "items": {"type": "object",
+      "required": ["id", "surface_id", "class", "area", "extent", "confidence"],
+      "properties": {"id": {"type": "string"}, "surface_id": {"type": "string"},
+        "class": {"enum": ["water_stain", "mold", "crack", "hole", "peeling_paint"]},
+        "area": {"$ref": "#/$defs/measure"},
+        "extent": {"type": "object", "properties": {"width": {"$ref": "#/$defs/measure"}, "height": {"$ref": "#/$defs/measure"},
+          "bottom_above_floor": {"$ref": "#/$defs/measure"}}},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}}}},
+    "concealed_flags": {"type": "array", "items": {"type": "object",
+      "required": ["id", "surface_id", "rule_id", "rule", "evidence"],
+      "properties": {"id": {"type": "string"}, "surface_id": {"type": "string"}, "rule_id": {"type": "string"},
+        "rule": {"type": "string"}, "evidence": {"type": "array", "items": {"type": "string"}}}}},
+    "scope": {"type": "array", "items": {"type": "object",
+      "required": ["id", "surface_id", "code", "description", "quantity", "unit"],
+      "properties": {"id": {"type": "string"}, "surface_id": {"type": "string"}, "code": {"type": "string"},
+        "description": {"type": "string"}, "quantity": {"$ref": "#/$defs/measure"},
+        "unit": {"enum": ["m2", "m", "ea"]}, "triggered_by": {"type": ["string", "null"]}}}},
+    "drift": {"type": "object", "properties": {"method": {"type": "string"}, "enabled": {"type": "boolean"},
+      "correction_m": {"type": ["number", "null"]}, "loop_closures": {"type": "integer"}}},
+    "timing_s": {"type": "object", "additionalProperties": {"type": "number"}},
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  }
+}
