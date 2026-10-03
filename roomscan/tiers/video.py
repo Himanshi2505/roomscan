@@ -26,6 +26,7 @@ from roomscan.tiers import photo
 
 KEEP_FRAC = 0.30      # new keyframe when < 30% of seeded corners survive
 MIN_GAP_S, MAX_GAP_S = 0.3, 2.0
+MIN_TRACKS = 40       # below this, take the keyframe even if the frame is blurry
 BLUR_MIN = 40.0
 MAX_KEYFRAMES = 400   # ~10 s each with MoGe-L on CPU (notes D13)
 
@@ -59,7 +60,11 @@ def track_keyframes(path: Path):
             p, p0 = p1[good], p0[good]
         gap = (i - last_kf) / fps
         degraded = p is None or len(p) < KEEP_FRAC * max(n_seed, 1) or gap >= MAX_GAP_S
-        if (not kfs or (degraded and gap >= MIN_GAP_S)) and                 cv2.Laplacian(g, cv2.CV_64F).var() >= BLUR_MIN:
+        sharp = cv2.Laplacian(g, cv2.CV_64F).var() >= BLUR_MIN
+        dying = p is not None and len(p) < MIN_TRACKS
+        # prefer sharp keyframes, but never let tracking die waiting for one:
+        # MoGe tolerates mild blur far better than odometry tolerates a gap
+        if (not kfs and sharp) or (kfs and degraded and gap >= MIN_GAP_S and (sharp or dying)):
             if kfs:
                 tracks.append((p0.reshape(-1, 2).copy(), p.reshape(-1, 2).copy()))
             kfs.append((i, cv2.cvtColor(img, cv2.COLOR_BGR2RGB)))
@@ -102,6 +107,35 @@ def _se2_from(T):
     return D._se2(T[0, 3], T[2, 3], yaw)
 
 
+def _wall2d(v: photo.View, stride: int = 4):
+    """Wall points + normals (x, z) of a keyframe in its own gravity frame."""
+    P = v.mv.points[::stride, ::stride][v.mv.mask[::stride, ::stride]] @ v.R_g.T
+    N = v.mv.normals[::stride, ::stride][v.mv.mask[::stride, ::stride]] @ v.R_g.T
+    m = np.abs(N[:, 1]) < 0.2
+    n2 = N[m][:, [0, 2]]
+    return P[m][:, [0, 2]], n2 / np.maximum(np.linalg.norm(n2, axis=1, keepdims=True), 1e-9)
+
+
+def icp_pair(vi: photo.View, vj: photo.View):
+    """Geometric fallback for textureless stretches: 2D point-to-plane ICP of j's
+    wall points onto i's, started at 'no motion' (<= 2 s apart). Returns the
+    same (s, R, t, n) tuple as the feature paths, or None."""
+    Pi, Ni = _wall2d(vi)
+    Pj, _ = _wall2d(vj)
+    if len(Pi) < 200 or len(Pj) < 200:
+        return None
+    T, inl, rmse = D._icp2d(Pj, Pi, Ni, np.eye(3), max_d=0.25)
+    # MoGe's point-map noise grows with range, so the residual limit does too
+    # (a fixed 6 cm rejected pairs with 0.9-1.0 inliers at 1-2 m, notes D16)
+    depth = float(np.median(np.linalg.norm(Pi, axis=1)))
+    if T is None or inl < 0.6 or rmse > 0.03 + 0.05 * depth:
+        return None
+    th = np.arctan2(T[0, 1], T[0, 0])
+    c, s_ = np.cos(th), np.sin(th)
+    R = np.array([[c, 0, s_], [0, 1, 0], [-s_, 0, c]])
+    return 1.0, R, np.array([T[0, 2], 0.0, T[1, 2]]), int(inl * 1000)
+
+
 def odometry(views: list[photo.View], tracks=None) -> tuple[list[np.ndarray], list[int], list]:
     """Chained 4x4 poses (gravity frame k -> world); segment id per frame.
     KLT tracks between consecutive keyframes are tried first, SIFT as fallback."""
@@ -119,6 +153,8 @@ def odometry(views: list[photo.View], tracks=None) -> tuple[list[np.ndarray], li
                 break
             if r is None:
                 r = photo.register_pair(views[k - back], views[k], seed=k)
+            if r is None:
+                r = icp_pair(views[k - back], views[k])
             if r is not None:
                 break
         if r is None:

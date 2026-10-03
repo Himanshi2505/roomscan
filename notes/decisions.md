@@ -134,3 +134,16 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
 - Median scale 0.947-0.950 in both ViT-L runs: MoGe is ~5% short indoors.
   mono.SCALE_CORR = 1.05. Fitted on the 3 sample captures (24 frames), not on
   the benchmark rooms, so the benchmark remains an independent test of it.
+
+## D16. Video odometry on textureless stretches
+- Stand-in walk (single_room at 30 fps, 51 adaptive keyframes) split into 11
+  segments: KLT tracks die on blank walls and fast turns.
+- Blur gate relaxed: take a blurry keyframe when < 40 tracks remain (MoGe
+  tolerates mild blur better than odometry tolerates a gap).
+- Geometric fallback: 2D point-to-plane ICP of consecutive keyframes' MoGe
+  wall points (KLT -> SIFT -> ICP).
+- Diagnostic: rejected ICP pairs had inlier ratios 0.9-1.0 with RMSE
+  4-11 cm at 1-2 m depth; the fixed 6 cm limit (from LiDAR) was too strict
+  for monocular depth. Limit now 0.03 + 0.05 * median depth.
+  Result: 11 -> 7 segments, 42 odometry edges over 51 keyframes.
+- Remaining failures are close-ups (0.24-0.4 m from a wall): step 2.
