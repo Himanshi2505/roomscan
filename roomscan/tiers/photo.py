@@ -47,6 +47,23 @@ class RoomRecon:
     unregistered: list[View] = field(default_factory=list)
 
 
+def exif_fov_x(p: Path) -> float | None:
+    """Horizontal FOV (deg) of the EXIF-upright image from FocalLengthIn35mmFilm.
+    35 mm equivalence is defined on the diagonal (43.27 mm), so it holds for any
+    aspect ratio and either orientation."""
+    try:
+        im = Image.open(p)
+        exif = im.getexif()
+        f35 = exif.get_ifd(0x8769).get(0xA405) or exif.get(0xA405)
+        if not f35:
+            return None
+        w, h = ImageOps.exif_transpose(im).size
+        f_px = float(f35) * np.hypot(w, h) / 43.27
+        return float(np.degrees(2 * np.arctan(w / (2 * f_px))))
+    except Exception:
+        return None
+
+
 def load_image(p: Path) -> np.ndarray:
     if p.suffix.lower() in {".heic", ".heif"}:
         try:
@@ -68,8 +85,8 @@ def _gravity_rotation(up_cam: np.ndarray) -> np.ndarray:
     return np.stack([x, y, z])       # rows: world axes expressed in camera coords
 
 
-def make_view(name: str, rgb: np.ndarray) -> View:
-    mv = mono.infer(rgb)
+def make_view(name: str, rgb: np.ndarray, fov_x: float | None = None) -> View:
+    mv = mono.infer(rgb, fov_x)
     R_g = _gravity_rotation(mono.gravity_up(mv))
     sift = cv2.SIFT_create(4000)
     g = cv2.cvtColor(mv.rgb, cv2.COLOR_RGB2GRAY)
@@ -203,7 +220,7 @@ def view_cloud(v: View, fid: int, stride: int = 2, max_range: float = 8.0) -> Or
 
 def reconstruct_room(folder: Path, fid0: int = 0) -> RoomRecon:
     files = sorted(p for p in folder.iterdir() if p.suffix.lower() in IMAGE_EXT)
-    views = [make_view(p.name, load_image(p)) for p in files]
+    views = [make_view(p.name, load_image(p), exif_fov_x(p)) for p in files]
     reg, unreg = register_room(views)
     clouds = [view_cloud(v, fid0 + k) for k, v in enumerate(reg)]
     c = voxel_downsample(OrientedCloud.concat(clouds), 0.02) if clouds else None
