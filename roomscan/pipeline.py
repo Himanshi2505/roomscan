@@ -29,6 +29,8 @@ def _lidar_cloud(capture: Path, drift: bool, timing: dict, info: dict):
     path = float(np.linalg.norm(np.diff(P[:, [0, 2]], axis=0), axis=1).sum())
     info["n_inputs"] = len(cap.depth_frames)
     info["cap"], info["poses"] = cap, poses
+    from roomscan.tiers.lidar import level_points
+    info["level_cloud"] = level_points(cap, poses=poses)
     return c, path
 
 
@@ -162,10 +164,12 @@ def run(capture: Path, tier: str, drift: bool = True) -> dict:
                             "keyframes). Re-record walking slower, ~1 m from walls")
     M = yaw_matrix(manhattan_yaw(c))
     c = c.transformed(M)
+    lvl = info.pop("level_cloud", None)
+    lvl = lvl.transformed(M) if lvl is not None else None
     t = time.perf_counter()
     # drift scales with walked path only when poses are used uncorrected
     plan = build_plan(c, tier, path_length=0.0 if info["drift"]["enabled"] else path,
-                      extra_rel=info["drift"].get("distortion_rel", 0.0))
+                      extra_rel=info["drift"].get("distortion_rel", 0.0), level_cloud=lvl)
     timing["plan"] = round(time.perf_counter() - t, 2)
     t = time.perf_counter()
     from roomscan import damage as DM

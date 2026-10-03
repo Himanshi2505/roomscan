@@ -108,3 +108,19 @@ def test_wardrobe_does_not_split_room():
     inside = [r for r in big if max(np.array(r["polygon"])[:, 1]) > 0]   # rooms on the room side
     assert len(inside) == 1, [r["floor_area"]["value"] for r in inside]
     assert abs(inside[0]["floor_area"]["value"] - 12.0) < 0.3
+
+
+def test_level_cloud_avoids_voxel_quantization():
+    """build_plan takes plane heights from level_cloud when given (FIX_LOOP plumbing +
+    accuracy). Note: this clutter-free room does NOT reproduce the real bias, which
+    came from voxel cells mixing floor/ceiling with walls and clutter (D22)."""
+    from roomscan.geometry.cloud import voxel_downsample
+    rng = np.random.default_rng(1)
+    raw = box_room(H=2.517)                         # ceiling between voxel layers
+    raw.xyz[:, 1] += 0.013                          # floor too
+    horiz = np.abs(raw.normals[:, 1]) > 0.9
+    raw.xyz[horiz, 1] += rng.normal(0, 0.01, horiz.sum())   # LiDAR-like 1 cm plane noise
+    fused = voxel_downsample(raw, 0.02)
+    plan = build_plan(fused, "lidar", single_room=True, level_cloud=raw.subset(horiz))
+    h = plan["rooms"][0]["ceiling_height"]["value"]
+    assert abs(h - 2.517) < 0.003, h

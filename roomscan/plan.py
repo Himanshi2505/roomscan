@@ -28,13 +28,16 @@ def _room_levels(c: OrientedCloud, P: RoomPolygon, floor_y: float):
 
 
 def build_plan(c: OrientedCloud, tier: str, path_length: float = 0.0,
-               single_room: bool = False, extra_rel: float = 0.0) -> dict:
+               single_room: bool = False, extra_rel: float = 0.0,
+               level_cloud: OrientedCloud | None = None) -> dict:
     """single_room=True: the capture is one room by construction (a photo-tier
     folder), so skip watershed splitting and keep the largest interior region."""
     model = U.load_model(tier)
     if extra_rel:   # e.g. trajectory distortion: widens every length/area interval
         model["scale_rel"] = float(np.hypot(model["scale_rel"], extra_rel))
-    floor, ceil = floor_ceiling(c)
+    # plane heights from un-voxelized points when the tier provides them (FIX_LOOP)
+    lc = level_cloud if level_cloud is not None else c
+    floor, ceil = floor_ceiling(lc)
     if floor is None:
         raise RuntimeError("no floor plane found: capture must show the floor")
     faces = extract_faces(c, floor.y, ceil.y if ceil else None)
@@ -59,7 +62,7 @@ def build_plan(c: OrientedCloud, tier: str, path_length: float = 0.0,
     rooms, all_openings = [], []
     for ri, P in enumerate(polys):
         rid = f"R{ri + 1}"
-        fl, ce = _room_levels(c, P, floor.y)
+        fl, ce = _room_levels(lc, P, floor.y)
         fy = fl.y if fl else floor.y
         # ceiling height: local ceiling, else global ceiling, else unobserved
         if ce is not None:
