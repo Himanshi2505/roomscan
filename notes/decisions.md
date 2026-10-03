@@ -23,3 +23,21 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
   scanned. Used as the multi-room stitch/drift capture.
 - single_scan_with_ceiling/c7d28f72c6: 9745 poses but only 3001 depth frames
   (subsampled); loader must not assume a depth file per pose.
+
+## D4. Wall faces, not raster edges, carry the dimensions
+- Walls are axis-aligned faces found as peaks in the 1D histogram of point
+  coordinates (after Manhattan rotation). Face position = mean of inliers within
+  2 cm of the median: thousands of LiDAR points -> sub-mm statistical error.
+  The raster (3 cm) is only used for topology (which room is where).
+
+## D5. Room segmentation = free-space carving + masked watershed + door-width merge
+- Floor points alone give a thin band around the walk path (floor under
+  furniture/near walls is rarely seen). Free-space carving (camera->hit rays at
+  0.3-1.8 m height) fills rooms out to their walls.
+- Rays through glass leak outside: blocked by a barrier raster of every
+  wall-height vertical-surface point (sills, cabinets), not just fitted faces.
+- OpenCV watershed with an "outside" marker flooded along walls (strips);
+  replaced by skimage's masked watershed.
+- Seeds: distance-to-wall > 0.55 m; doorways (half-width <= 0.45 m) can't seed.
+- Merge regions whose shared cut > 1.6 m (open-plan transition, not a door).
+- Result on the apartment scan: 9 regions, matching the visible layout.
