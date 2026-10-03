@@ -238,3 +238,11 @@ tall furniture face 0.41 m inside the west wall is burned in as a wall.
   closed rectangle there (flagged in its note). This scene cannot fairly score
   segmentation; it is the wrong fix-loop target. Lesson: check the GT's
   assumptions before choosing a fix-loop gate.
+
+## D22. Fix loop: ceiling height via raw horizontal points
+- Declared (docs/FIX_LOOP.md, committed before the fix): voxel quantization.
+- Isolation on 42445021: horizontal-only voxelized +0.14 cm, all-surface
+  voxelized +2.03 cm, raw horizontal +0.38 cm -> mechanism is cross-surface
+  mixing in voxels, not quantization. Fix (level_points) holds either way.
+- Tags: R1 +1.51 -> -0.09 cm (PASS); R2 +3.01 -> +2.21 cm (still FAIL).
+  Apartment identical. Gate is per room -> not yet passed; R2 to diagnose.
