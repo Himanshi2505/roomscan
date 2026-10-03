@@ -179,3 +179,6 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
   intervals; the partial-coverage warning (D17) is what flags them.
 - After: 5/5 genuine walls and the room area (8.19 in [3.76, 9.79]) inside
   their 90% CIs. Provisional: one harsh clip; benchmark calibration replaces it.
+
+- Correction (found by `roomscan check`): the stand-in walk used in D16-D18 is
+  23 fps, not 30 (46 fps source, every 2nd frame kept). Real iPhone video is 30 fps.

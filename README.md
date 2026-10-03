@@ -12,6 +12,7 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate      macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt          # ~3 min (CPU PyTorch)
 python scripts/fetch_weights.py --large  # ~1.5 GB: MoGe-2 (photo/video tiers)
+python -m roomscan check <capture>       # optional: seconds-long pre-flight check
 python -m roomscan run <capture>         # one command per capture
 ```
 

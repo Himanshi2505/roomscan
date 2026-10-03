@@ -64,7 +64,16 @@ def main(argv=None):
     r.add_argument("--out", type=Path, default=None)
     r.add_argument("--tier", choices=["lidar", "video", "photo"])
     r.add_argument("--no-drift", action="store_true", help="ablation: use poses as-is")
+    c = sub.add_parser("check", help="pre-flight check a capture against the protocol (seconds)")
+    c.add_argument("capture", type=Path)
     a = ap.parse_args(argv)
+    if a.cmd == "check":
+        from roomscan.check import check
+        rep = check(a.capture)
+        for level, msg in rep.lines:
+            print(f"{level:4s}  {msg}")
+        print(f"\n{rep.fails} problem(s)" if rep.fails else "\nready to run")
+        sys.exit(1 if rep.fails else 0)
     out = a.out or Path("out") / a.capture.name
     res = run(a.capture, out, a.tier, drift=not a.no_drift)
     print(f"{len(res['rooms'])} rooms, footprint {res['footprint_area']['value']} m2, "
