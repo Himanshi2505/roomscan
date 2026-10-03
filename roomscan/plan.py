@@ -39,7 +39,7 @@ def build_plan(c: OrientedCloud, tier: str, path_length: float = 0.0,
         raise RuntimeError("no floor plane found: capture must show the floor")
     faces = extract_faces(c, floor.y, ceil.y if ceil else None)
     g = R.make_grid(c)
-    W = R.wall_raster(g, faces)
+    W = R.wall_raster(g, faces, floor_y=floor.y, ceil_y=ceil.y if ceil else None)
     I = R.interior_mask(c, g, floor.y, W)
     if single_room:
         from scipy import ndimage as ndi

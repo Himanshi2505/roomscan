@@ -75,3 +75,36 @@ def test_occluded_wall_is_not_an_opening():
     c = box_room(with_beyond=False)
     plan = build_plan(c, "lidar", single_room=True)
     assert not [o for o in plan["rooms"][0]["openings"] if o["kind"] == "door"]
+
+
+def _with_wardrobe(c):
+    """Add a 1.6 m tall wardrobe front 0.4 m from the x=0 wall, 2.8 m long."""
+    P, n = _plane("x", 0.4, (0.1, 2.9), (0, 1.6), [1, 0, 0])
+    top, nt = _plane("y", 1.6, (0.0, 0.4), (0.1, 2.9), [0, 1, 0])
+    xyz = np.concatenate([c.xyz, P, top])
+    nrm = np.concatenate([c.normals, n, nt])
+    frame = np.concatenate([c.frame, np.zeros(len(P) + len(top), np.int32)])
+    return OrientedCloud(xyz, nrm, frame, c.cams)
+
+
+def test_furniture_face_is_not_a_wall():
+    from roomscan.geometry.levels import floor_ceiling
+    from roomscan.geometry.rooms import is_full_height
+    from roomscan.geometry.walls import extract_faces
+    c = _with_wardrobe(box_room())
+    fl, ce = floor_ceiling(c)
+    faces = extract_faces(c, fl.y, ce.y)
+    wardrobe = [f for f in faces if f.axis == "x" and abs(f.pos - 0.4) < 0.03]
+    walls = [f for f in faces if f.axis == "x" and abs(f.pos) < 0.03]
+    assert wardrobe and walls
+    assert not is_full_height(wardrobe[0], fl.y, ce.y)
+    assert is_full_height(walls[0], fl.y, ce.y)
+
+
+def test_wardrobe_does_not_split_room():
+    """Regression for D21: a furniture front burned in as a wall split one room."""
+    plan = build_plan(_with_wardrobe(box_room()), "lidar")      # multi-room segmentation on
+    big = [r for r in plan["rooms"] if r["floor_area"]["value"] > 1.0]
+    inside = [r for r in big if max(np.array(r["polygon"])[:, 1]) > 0]   # rooms on the room side
+    assert len(inside) == 1, [r["floor_area"]["value"] for r in inside]
+    assert abs(inside[0]["floor_area"]["value"] - 12.0) < 0.3

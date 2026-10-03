@@ -56,9 +56,56 @@ def _raster(g: Grid, xyz: np.ndarray, min_hits: int = 1) -> np.ndarray:
     return m >= min_hits
 
 
-def wall_raster(g: Grid, faces: list[WallFace], thick_px: int = 2) -> np.ndarray:
+def is_full_height(f: WallFace, floor_y: float | None, ceil_y: float | None) -> bool:
+    """A wall reaches the ceiling; a wardrobe or bed side stops below it. Without
+    an observed ceiling, 2.0 m above the floor is the bar (above door/furniture
+    tops). Faces with unknown height are kept (conservative)."""
+    if f.top is None or floor_y is None:
+        return True
+    bar = (ceil_y - 0.15) if ceil_y is not None else floor_y + 2.0
+    return f.top >= bar
+
+
+FURN_BELOW_CEIL = 0.30   # a furniture front stops at least this far under the ceiling
+FURN_GAP = (0.05, 0.80)  # ...and stands this far in front of a full-height wall
+
+
+def furniture_faces(faces: list[WallFace], ceil_y: float | None,
+                    floor_y: float | None = None) -> set[int]:
+    """Indices of faces with positive evidence of being furniture against a wall.
+
+    Requires (1) an observed ceiling, (2) the face stops >= FURN_BELOW_CEIL under
+    it, (3) a full-height face with the same normal stands behind it within
+    FURN_GAP, overlapping >= half its length. A blanket height test also dropped
+    real walls whose tops went unseen (apartment 8 -> 5 rooms, D21), so absence
+    of evidence keeps the face."""
+    if ceil_y is None:
+        return set()
+    full = [w for w in faces if w.top is not None and w.top >= ceil_y - 0.15]
+    out = set()
+    for i, f in enumerate(faces):
+        if f.top is None or f.top > ceil_y - FURN_BELOW_CEIL:
+            continue
+        for w in full:
+            if w.axis != f.axis or w.sign != f.sign:
+                continue
+            gap = (f.pos - w.pos) * f.sign          # > 0: wall is behind f (away from the room)
+            overlap = min(f.hi, w.hi) - max(f.lo, w.lo)
+            if FURN_GAP[0] < gap < FURN_GAP[1] and overlap >= 0.5 * f.length:
+                out.add(i)
+                break
+    return out
+
+
+def wall_raster(g: Grid, faces: list[WallFace], thick_px: int = 2,
+                floor_y: float | None = None, ceil_y: float | None = None) -> np.ndarray:
+    """Barrier map for room segmentation. Furniture fronts standing against a
+    wall are left out: burned in as walls they split a room in two (D21)."""
     img = np.zeros(g.shape, np.uint8)
-    for f in faces:
+    skip = furniture_faces(faces, ceil_y, floor_y)
+    for i, f in enumerate(faces):
+        if i in skip:
+            continue
         if f.axis == "x":
             p, q = g.to_px([f.pos, f.pos], [f.lo, f.hi])
         else:

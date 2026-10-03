@@ -216,3 +216,25 @@ Scripts that regenerate the cited numbers: `tools/README.md`.
   that also includes space beyond the opening) -> polygon wall lengths wrong
   although faces are right. Fix-loop candidates: (1) segmentation split,
   (2) ceiling +1.9 cm bias, (3) recording 2's 2.4 m drift correction.
+
+## D21. Fix-loop attempt on room segmentation (ARKitScenes 421380): post-mortem
+Baseline (tag fix-before): recording 1 splits the GT room; a 2.22 m, 1.58 m
+tall furniture face 0.41 m inside the west wall is burned in as a wall.
+- Attempt 1, "only full-height faces are barriers" (ceiling, or 2.0 m without
+  one). Predicted: one ~8.4 m2 room, no side effects. Result: apartment
+  8 -> 5 rooms (scan never saw the ceiling, real walls' tops unseen, dropped);
+  public room merged with the corridor (12.96 m2). Badly wrong; reverted.
+- Attempt 2, "positive evidence of furniture": ceiling observed AND face stops
+  >= 30 cm under it AND a full-height parallel face stands 5-80 cm behind it.
+  Apartment identical (8 rooms, 63.28 m2). Public room: the west strip joins
+  the room, but a 0.41 m bed side (face 21, free-standing) now splits the room
+  down the middle (7.18 = left half + corridor, 3.26 = right half). Target
+  not improved; kept because it is principled, unit-tested and side-effect free.
+- Attempt 3, also drop faces topping out < 1.0 m: one 12.78 m2 region, room
+  merged with the corridor again. Reverted.
+- Why it fell short: the room's SW "opening" is an L-shaped ~2.4 m gap (laser:
+  ~1.5 m of S wall + ~0.9 m of W wall missing), wider than MAX_DOOR_W, so once
+  interior barriers go, room and corridor genuinely connect. The GT assumed a
+  closed rectangle there (flagged in its note). This scene cannot fairly score
+  segmentation; it is the wrong fix-loop target. Lesson: check the GT's
+  assumptions before choosing a fix-loop gate.

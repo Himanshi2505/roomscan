@@ -27,6 +27,8 @@ class WallFace:
     lo: float           # extent along the other horizontal axis
     hi: float
     support: int
+    top: float | None = None   # world y reached by the face's points (98th pct); walls reach
+                               # the ceiling, furniture fronts stop below it (D21)
 
     @property
     def length(self) -> float:
@@ -105,4 +107,15 @@ def extract_faces(c: OrientedCloud, floor_y: float, ceil_y: float | None,
                 faces.append(WallFace(axis, sign, float(np.mean(inl)),
                                       float(np.std(inl) / np.sqrt(len(inl))),
                                       float(lo), float(hi), int(seg.sum())))
+    for f in faces:
+        f.top = _face_top(c, f)
     return faces
+
+
+def _face_top(c: OrientedCloud, f: WallFace) -> float | None:
+    """How high the face's own points go, over the full height (the extraction
+    band stops below the ceiling, so it can't answer this)."""
+    k, o = (0, 2) if f.axis == "x" else (2, 0)
+    m = (np.abs(c.xyz[:, k] - f.pos) < 0.03) & (c.xyz[:, o] > f.lo) & (c.xyz[:, o] < f.hi) \
+        & (f.sign * c.normals[:, k] > 0.8)
+    return float(np.percentile(c.xyz[m, 1], 98)) if m.sum() >= 20 else None
