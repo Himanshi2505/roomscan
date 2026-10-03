@@ -183,3 +183,18 @@ Scripts that regenerate the cited numbers: `tools/README.md`.
 
 - Correction (found by `roomscan check`): the stand-in walk used in D16-D18 is
   23 fps, not 30 (46 fps source, every 2nd frame kept). Real iPhone video is 30 fps.
+
+## D19. Third-party validation: ARKitScenes (Apple), clearly labelled
+- No benchmark captures are available yet, so one public scene is used as
+  *supplementary* validation, never as our benchmark capture: visit 421380
+  (one room recorded twice, 42445021 + 42445022) with static laser-scanner
+  ground truth (scan 170107). Recorded by Apple on an iPad Pro 2020, not by us
+  and not on an iPhone 15. Licence allows commercial use below 700M MAU.
+  Fetched by tools/fetch_arkitscenes.py, never committed.
+- Pose convention, tested like D2 (occupied 5 cm voxels, 2862 frames):
+  as-is 415,125; ARKit flip 463,529; inverted+flip 332,753; inverted 57,730.
+  -> .traj is world->camera, OpenCV camera axes.
+- The world is Z-up (33.8% of normals on Z vs ~21% on X/Y; camera height std
+  0.14 m on Z vs 0.99 m on Y). Converter rotates (x, y, z) -> (x, z, -y).
+  Result: floor and ceiling found, ceiling height 2.335 m, camera 1.59 m
+  above the floor; `roomscan check` passes both recordings.
