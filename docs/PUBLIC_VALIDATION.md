@@ -51,9 +51,26 @@ From `benchmark/public_gt/arkitscenes_421380.json`:
 
 Full fix-loop story: `docs/FIX_LOOP.md`.
 
+## Results (video tier): the same walkthrough's `.mov`, MoGe-2 ViT-L, no LiDAR
+
+`python -m roomscan run data/public/arkitscenes/42445021/42445021.mov --out out/public/video_42445021`
+
+The clip is 60 fps, 48 s, and decodes upright via its rotation metadata.
+
+| measure | result |
+|---|---|
+| Tracking | 1 segment, 56 keyframes, 4 loop closures (held, unlike the stand-in clip) |
+| Pose-graph correction | 1.24 m (8.6% of path): heavy distortion |
+| Largest room's walls vs the LiDAR plan of the same recording | median off 33 cm (**18%**), max 58 cm; mixed short and long, so not a single scale factor |
+| Ceiling height (R2) | 2.834 m vs laser 2.315 m (**+52 cm**) |
+| Intervals | R1 area 9.24 m², 90% CI [2.2, 16.3]: very wide, but contains the LiDAR value (honest, not useful) |
+| Time | 1,269 s on CPU |
+
+**Verdict:** the video tier **fails** the ±3% wall gate on this scene by a wide margin, and it is too slow on CPU for a live run. Its intervals widen instead of lying. Next candidates: scale and ceiling anchoring per keyframe, and fewer keyframes or a GPU.
+
 ## Not covered by this data
 
-- photo tier on iPhone photos
+- photo tier on iPhone photos (stills from this scene are pending)
 - the head-to-head against a consumer app
 - staged damage
 - one room recorded twice with tape ground truth
