@@ -188,3 +188,63 @@ def correct_drift(cap: ss.LidarCapture):
         C[0, 3], C[2, 3] = C2[0, 2], C2[1, 2]
         poses[f.index] = C @ f.T_wc
     return poses, info
+
+
+# ---------------------------------------------------------------- vertical drift
+# The 2D graph above assumed height drift is negligible (D9). It is not: on
+# ARKitScenes 42445021 the floor reads up to +3.6 cm high during one stretch of
+# the walk, which made one room's ceiling +2.2 cm too high (docs/FIX_LOOP.md §5).
+
+VERT_WINDOW_S = 2.0        # time window per height estimate
+VERT_MIN_FLOOR = 300       # floor points a window needs to trust its offset
+
+
+def vertical_offsets(frame: np.ndarray, y: np.ndarray, frame_t: dict,
+                     floor_y: float, window_s: float = VERT_WINDOW_S,
+                     min_pts: int = VERT_MIN_FLOOR) -> dict:
+    """Per-frame vertical offset from floor points (y, frame of each point).
+
+    Each time window's offset = median height of its floor points within 8 cm
+    of the whole-scan floor, minus that floor. Windows without enough floor are
+    filled by linear interpolation in time. Returns {frame: dy}; subtract dy
+    from the frame's pose height to correct it."""
+    t = np.array([frame_t[f] for f in frame])
+    t0 = min(frame_t.values())
+    win = ((t - t0) / window_s).astype(int)
+    near = np.abs(y - floor_y) < 0.08
+    centres, offs = [], []
+    for w in np.unique(win):
+        m = (win == w) & near
+        if m.sum() >= min_pts:
+            centres.append(t0 + (w + 0.5) * window_s)
+            offs.append(float(np.median(y[m]) - floor_y))
+    if not offs:
+        return {f: 0.0 for f in frame_t}
+    return {f: float(np.interp(tf, centres, offs)) for f, tf in frame_t.items()}
+
+
+def correct_vertical(cap: ss.LidarCapture, poses: dict | None, every: int = 4):
+    """Floor-anchored vertical correction of LiDAR poses (on top of 2D drift)."""
+    from roomscan.geometry.levels import _plane_height
+    frames = cap.depth_frames[::every]
+    P, F = [], []
+    for f in frames:
+        d, K = cap.load_depth(f)
+        T = poses.get(f.index, f.T_wc) if poses else f.T_wc
+        c = depth_to_cloud(d[::2, ::2], K * np.array([[0.5], [0.5], [1.0]]), T, f.index, stride=1)
+        m = c.normals[:, 1] > 0.9
+        P.append(c.xyz[m, 1])
+        F.append(c.frame[m])
+    y, fr = np.concatenate(P), np.concatenate(F)
+    lv = _plane_height(y, "floor")
+    if lv is None:
+        return poses, {"vertical_correction_m": None}
+    frame_t = {f.index: f.timestamp for f in cap.depth_frames}
+    dy = vertical_offsets(fr, y, frame_t, lv.y)
+    out = {}
+    for f in cap.depth_frames:
+        T = (poses.get(f.index, f.T_wc) if poses else f.T_wc).copy()
+        T[1, 3] -= dy.get(f.index, 0.0)
+        out[f.index] = T
+    vals = np.array(list(dy.values()))
+    return out, {"vertical_correction_m": round(float(np.abs(vals).max()), 4)}

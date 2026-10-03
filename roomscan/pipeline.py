@@ -19,8 +19,11 @@ def _lidar_cloud(capture: Path, drift: bool, timing: dict, info: dict):
     info["drift"] = {"method": "none (poses as-is)", "enabled": False,
                      "correction_m": None, "loop_closures": 0}
     if drift:
-        from roomscan.drift import correct_drift
+        from roomscan.drift import correct_drift, correct_vertical
         poses, info["drift"] = correct_drift(cap)
+        poses, vinfo = correct_vertical(cap, poses)      # height drift (FIX_LOOP §5)
+        info["drift"].update(vinfo)
+        info["drift"]["method"] += " + floor-anchored vertical correction"
         timing["drift"] = round(time.perf_counter() - t, 2)
     t = time.perf_counter()
     c = build_cloud(cap, every=3, poses=poses)
