@@ -1,6 +1,7 @@
 # Design decisions log
 
 Each entry: what we chose, why, and the evidence. This is the defense crib sheet.
+Scripts that regenerate the cited numbers: `tools/README.md`.
 
 ## D1. Capture route: Route 2, stock protocol on Stray Scanner
 - Route 1 (own iOS app) needs Xcode on macOS; the dev machine is Windows.
