@@ -69,7 +69,8 @@ def track_keyframes(path: Path):
         if p is not None and len(p):
             p1, st, _ = cv2.calcOpticalFlowPyrLK(prev_g, g, p, None, **lk)
             pb, st2, _ = cv2.calcOpticalFlowPyrLK(g, prev_g, p1, None, **lk)
-            good = (st.ravel() == 1) & (st2.ravel() == 1) &                 (np.linalg.norm((pb - p).reshape(-1, 2), axis=1) < 1.0)
+            fb_err = np.linalg.norm((pb - p).reshape(-1, 2), axis=1)   # forward-backward check
+            good = (st.ravel() == 1) & (st2.ravel() == 1) & (fb_err < 1.0)
             p, p0 = p1[good], p0[good]
         gap = (i - last_kf) / fps
         degraded = p is None or len(p) < KEEP_FRAC * max(n_seed, 1) or gap >= MAX_GAP_S
