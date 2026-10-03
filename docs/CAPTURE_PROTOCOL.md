@@ -6,7 +6,7 @@
 
 ### Tier A: Photos (any iPhone 15 or newer, native Camera app)
 
-1. Camera app → **Photo** mode → tap **0.5×** (ultra-wide). Flash **off**. Leave all other camera settings at their defaults. Hold the phone **upright (portrait)** at chest height, screen facing you, **level** (don't tilt it up or down).
+1. Camera app → **Photo** mode → tap **0.5×** (ultra-wide). Flash **off**. Leave all other camera settings at their defaults. Hold the phone **upright (portrait)** at chest height, screen facing you, **level** (don't tilt it up or down). **No 0.5× button** (iPhone 16e, iPhone Air): stay on 1× and hold the phone **sideways (landscape)** instead.
 2. For **each room**, in this order:
    1. **Wall photos (one per wall, going clockwise round the room):** stand with your **back touching the middle of a wall** and take one photo of the **opposite wall**. Check on screen that **both ends (corners) of the opposite wall** and **both the floor line and the ceiling line** are visible; if not, step to the side until they are. Then move clockwise to the middle of the next wall and repeat. A rectangular room = **4 wall photos**.
    2. **Doorway photos:** stand **in each doorway** of the room and take one photo **into the next room**.
