@@ -19,7 +19,7 @@ WEIGHTS = {"small": ROOT / "weights" / "small" / "model.pt",
            "large": ROOT / "weights" / "large" / "model.pt"}
 MODEL_SIZE = "large"
 RES_LEVEL = 0          # MoGe token budget 0..9; 0 = fastest (see notes D13)
-SCALE_CORR = 1.0       # global multiplicative fix for MoGe's indoor metric bias,
+SCALE_CORR = 1.05      # global multiplicative fix for MoGe's indoor metric bias,
                        # fitted against LiDAR on the sample captures (notes D14).
                        # Applied after the cache, so changing it needs no re-inference.
 INFER_LONG_SIDE = 640

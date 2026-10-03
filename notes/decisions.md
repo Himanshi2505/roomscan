@@ -126,3 +126,11 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
 - ICP point cap sweep: 3000 -> 25 s but lost 1 of 3 loop closures and moved
   poses 10 cm (rejected); 8000 -> 30 s, 3 closures, within 1.3 cm of the
   full-resolution solution (chosen); 15000 -> 43 s, same as 8000.
+
+## D14b. ViT-L with true FOV, and the global scale correction
+- ViT-L + true FOV: median |scale-1| 7.5%, p90 18.8%, std 0.093
+  (vs guessed FOV: 6.2%, 17.3%, std 0.138). Scatter drops by a third, median
+  error about the same -> keep EXIF FOV for photos (less per-photo noise).
+- Median scale 0.947-0.950 in both ViT-L runs: MoGe is ~5% short indoors.
+  mono.SCALE_CORR = 1.05. Fitted on the 3 sample captures (24 frames), not on
+  the benchmark rooms, so the benchmark remains an independent test of it.
