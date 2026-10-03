@@ -4,6 +4,8 @@
     python tools/fixloop_ceiling.py run fix-after target      # run separately to keep
     python tools/fixloop_ceiling.py run fix-before apartment  # peak memory low
     python tools/fixloop_ceiling.py run fix-after apartment
+    python tools/fixloop_ceiling.py run fix-after-2 target     # iteration 2
+    python tools/fixloop_ceiling.py run fix-after-2 apartment
     python tools/fixloop_ceiling.py report
 
 Each tag is checked out into its own git worktree (fixloop/wt_<tag>), the
@@ -60,7 +62,7 @@ def load(tag: str, scan: str) -> dict | None:
 def main():
     if len(sys.argv) >= 4 and sys.argv[1] == "run":
         return run_one(sys.argv[2], sys.argv[3])
-    r = {tag: {scan: load(tag, scan) for scan in SCANS} for tag in ("fix-before", "fix-after")}
+    r = {tag: {scan: load(tag, scan) for scan in SCANS} for tag in ("fix-before", "fix-after", "fix-after-2")}
     L = ["# Fix loop: ceiling height (LiDAR tier)", "",
          "Target: ARKitScenes 42445021 (third-party), laser GT ceiling 2.3149 m; gate <= 1.5 cm.", "",
          "| tag | room | ceiling (m) | error (cm) | gate |", "|---|---|---|---|---|"]
@@ -85,7 +87,7 @@ def main():
         areas = sorted((x["floor_area"]["value"] for x in a["rooms"]), reverse=True)
         L.append(f"| {tag} | {len(a['rooms'])} | {a['footprint_area']['value']} | {areas} |")
     (OUT / "CEILING_DELTA.md").write_text("\n".join(L) + "\n", encoding="utf-8")
-    (OUT / "code.diff").write_text(sh("git", "diff", "fix-before", "fix-after", "--", "roomscan"),
+    (OUT / "code.diff").write_text(sh("git", "diff", "fix-before", "fix-after-2", "--", "roomscan"),
                                    encoding="utf-8")
     print("\n".join(L))
 

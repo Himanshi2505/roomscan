@@ -246,3 +246,7 @@ tall furniture face 0.41 m inside the west wall is burned in as a wall.
   mixing in voxels, not quantization. Fix (level_points) holds either way.
 - Tags: R1 +1.51 -> -0.09 cm (PASS); R2 +3.01 -> +2.21 cm (still FAIL).
   Apartment identical. Gate is per room -> not yet passed; R2 to diagnose.
+- Iteration 2 (vertical drift, tag fix-after-2): R1 -1.29 cm, R2 -0.59 cm ->
+  gate passes. R1 missed its +-0.5 cm prediction (far-range ceiling bias in
+  the last window, previously masked by drift). Apartment footprint +0.9%
+  (63.28 -> 63.82 m2), still 8 rooms. D9's "height drift negligible" was wrong.
