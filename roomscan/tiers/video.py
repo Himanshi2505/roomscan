@@ -79,13 +79,16 @@ def track_keyframes(path: Path):
         # prefer sharp keyframes, but never let tracking die waiting for one:
         # MoGe tolerates mild blur far better than odometry tolerates a gap
         want_kf = (not kfs and sharp) or (kfs and degraded and gap >= MIN_GAP_S and (sharp or dying))
-        if want_kf and i >= retry_at and too_close(mono.infer(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))):
-            retry_at = i + CLOSE_RETRY          # keep tracking; try again a bit later
-            want_kf = False
+        mv = None
+        if want_kf and i >= retry_at:
+            mv = mono.infer(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))   # reused for the view (A1)
+            if too_close(mv):
+                retry_at = i + CLOSE_RETRY      # keep tracking; try again a bit later
+                want_kf = False
         if want_kf and i >= retry_at:
             if kfs:
                 tracks.append((p0.reshape(-1, 2).copy(), p.reshape(-1, 2).copy()))
-            kfs.append((i, cv2.cvtColor(img, cv2.COLOR_BGR2RGB)))
+            kfs.append((i, cv2.cvtColor(img, cv2.COLOR_BGR2RGB), mv))
             last_kf = i
             seed = cv2.goodFeaturesToTrack(g, 1500, 0.005, 7)
             p = seed.astype(np.float32) if seed is not None else np.zeros((0, 1, 2), np.float32)
@@ -219,8 +222,9 @@ def build(path: Path, drift: bool = True):
     kfs, tracks = track_keyframes(path)
     if len(kfs) < 3:
         raise RuntimeError("video too short or too blurry: fewer than 3 usable keyframes")
-    fov = self_calibrated_fov(kfs)
-    views = [photo.make_view(f"kf{k:06d}", rgb, fov) for k, rgb in kfs]
+    # one MoGe inference per keyframe: the result from the close-up check is
+    # reused (it previously ran again with a fixed FOV, ~2x the time; D23)
+    views = [photo.make_view(f"kf{k:06d}", rgb, mv=mv) for k, rgb, mv in kfs]
     T, seg, odo_pairs = odometry(views, tracks)
     # Segments have no relative pose between them; fusing them anyway produced a
     # merged blob with confident intervals (D17). Keep only the largest one.

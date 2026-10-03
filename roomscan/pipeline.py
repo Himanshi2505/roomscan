@@ -160,6 +160,8 @@ def run(capture: Path, tier: str, drift: bool = True) -> dict:
         t = time.perf_counter()
         c, path, info["drift"], info["n_inputs"], info["views"] = video.build(vid, drift=drift)
         timing["reconstruction"] = round(time.perf_counter() - t, 2)
+        from roomscan import mono
+        timing["moge_live_calls"] = mono.LIVE_CALLS
         d = info["drift"]
         if d["segments"] > 1:
             warnings.append(f"video tracking broke into {d['segments']} pieces; the plan covers "

@@ -85,8 +85,10 @@ def _gravity_rotation(up_cam: np.ndarray) -> np.ndarray:
     return np.stack([x, y, z])       # rows: world axes expressed in camera coords
 
 
-def make_view(name: str, rgb: np.ndarray, fov_x: float | None = None) -> View:
-    mv = mono.infer(rgb, fov_x)
+def make_view(name: str, rgb: np.ndarray, fov_x: float | None = None,
+              mv: mono.MonoView | None = None) -> View:
+    """mv: reuse an existing MoGe result instead of running inference again."""
+    mv = mv if mv is not None else mono.infer(rgb, fov_x)
     R_g = _gravity_rotation(mono.gravity_up(mv))
     sift = cv2.SIFT_create(4000)
     g = cv2.cvtColor(mv.rgb, cv2.COLOR_RGB2GRAY)

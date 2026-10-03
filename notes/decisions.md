@@ -250,3 +250,13 @@ tall furniture face 0.41 m inside the west wall is burned in as a wall.
   gate passes. R1 missed its +-0.5 cm prediction (far-range ceiling bias in
   the last window, previously masked by drift). Apartment footprint +0.9%
   (63.28 -> 63.82 m2), still 8 rooms. D9's "height drift negligible" was wrong.
+
+## D23. Video speed: one MoGe inference per keyframe
+- 1,269 s run on ARKitScenes 42445021 made ~122 MoGe-L calls: close-up check
+  (no FOV) + 10 FOV-calibration frames + final views re-inferred with FOV.
+- A1: the close-up check's result is reused as the view (no FOV conditioning).
+  Fresh-cache run (ROOMSCAN_CACHE_DIR): 568 s, 56 live calls (timing reports
+  moge_live_calls). Largest-room wall error vs LiDAR plan 17.8% -> 17.4%;
+  footprint 13.38 -> 15.06 m2 (LiDAR 10.61): further off; distortion 8.6 -> 6.6%.
+  Accuracy is poor either way; the trade was taken for a 2.2x speed-up.
+- Still above the 5 min target.

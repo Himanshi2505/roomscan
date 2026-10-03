@@ -8,13 +8,16 @@ out/cache to force the live path.
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-CACHE = ROOT / "out" / "cache" / "moge"
+# ROOMSCAN_CACHE_DIR: point at an empty folder to time a run without cache hits
+CACHE = Path(os.environ.get("ROOMSCAN_CACHE_DIR", ROOT / "out" / "cache")) / "moge"
+LIVE_CALLS = 0          # live (non-cached) inferences this process; reported in timing
 WEIGHTS = {"small": ROOT / "weights" / "small" / "model.pt",
            "large": ROOT / "weights" / "large" / "model.pt"}
 MODEL_SIZE = "large"
@@ -69,6 +72,8 @@ def infer(rgb: np.ndarray, fov_x_deg: float | None = None) -> MonoView:
         d = np.load(f)
         return MonoView(d["points"] * SCALE_CORR, d["normals"], d["mask"], d["K"], rgb)
     import torch
+    global LIVE_CALLS
+    LIVE_CALLS += 1
     m = _load()
     with torch.no_grad():
         o = m.infer(torch.tensor(rgb / 255.0, dtype=torch.float32).permute(2, 0, 1),
