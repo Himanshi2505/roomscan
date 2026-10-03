@@ -106,6 +106,12 @@ def edge_openings(c: OrientedCloud, e: Edge, ei: int, floor_y: float,
             col_open = open_[a:b + 1]
             rows = np.flatnonzero(col_open.mean(0) > 0.5)
             head = float(H_BINS[rows.max() + 1]) if len(rows) and rows.max() + 2 < len(H_BINS) - 1 else None
+            if head is not None:
+                # lintel underside: lowest wall hit above 1.6 m inside the jambs
+                # (5 cm bins are too coarse when the head anchors metric scale)
+                inside = wall_m & (s > lo + 0.05) & (s < hi - 0.05) & (h > 1.6)
+                if inside.sum() >= 10:
+                    head = float(np.percentile(h[inside], 2))
             sill = float(H_BINS[rows.min()]) if kind == "window" and len(rows) else None
             kk = "passage" if kind == "door" and hi - lo > 1.3 else kind
             out.append(Opening(kk, ei, lo, hi, sig, sill, head,

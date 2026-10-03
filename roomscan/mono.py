@@ -19,6 +19,9 @@ WEIGHTS = {"small": ROOT / "weights" / "small" / "model.pt",
            "large": ROOT / "weights" / "large" / "model.pt"}
 MODEL_SIZE = "large"
 RES_LEVEL = 0          # MoGe token budget 0..9; 0 = fastest (see notes D13)
+SCALE_CORR = 1.0       # global multiplicative fix for MoGe's indoor metric bias,
+                       # fitted against LiDAR on the sample captures (notes D14).
+                       # Applied after the cache, so changing it needs no re-inference.
 INFER_LONG_SIDE = 640
 
 _model = None
@@ -64,7 +67,7 @@ def infer(rgb: np.ndarray, fov_x_deg: float | None = None) -> MonoView:
     f = CACHE / f"{key}.npz"
     if f.exists():
         d = np.load(f)
-        return MonoView(d["points"], d["normals"], d["mask"], d["K"], rgb)
+        return MonoView(d["points"] * SCALE_CORR, d["normals"], d["mask"], d["K"], rgb)
     import torch
     m = _load()
     with torch.no_grad():
@@ -82,7 +85,7 @@ def infer(rgb: np.ndarray, fov_x_deg: float | None = None) -> MonoView:
     mask = o["mask"].numpy().astype(bool) & np.isfinite(pts).all(-1)
     CACHE.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(f, points=pts, normals=nrm, mask=mask, K=K)
-    return MonoView(pts, nrm, mask, K, rgb)
+    return MonoView(pts * SCALE_CORR, nrm, mask, K, rgb)
 
 
 def _normals(P: np.ndarray) -> np.ndarray:

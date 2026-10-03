@@ -35,6 +35,11 @@ from roomscan.geometry.polygon import Edge
 from roomscan.geometry.walls import extract_faces
 from roomscan.tiers import photo
 
+DOOR_HEAD = (2.05, 0.04)   # interior door opening height prior (m): 2.0-2.1 covers
+                           # US 6'8" (2.03), EU 2.0-2.05, IN 2.1 (7 ft)
+# MoGe metric-scale error split (fitted vs LiDAR, notes D14):
+SCALE_IND = 0.08           # per-photo, independent between photos -> averages down
+SCALE_BIAS = 0.04          # common-mode residual after mono.SCALE_BIAS correction
 INSET = 0.25          # camera ahead of the wall behind the photographer (m)
 INSET_SIG = 0.10
 CORNER_TOL = 0.20     # side face must reach within this of the facing wall
@@ -143,19 +148,30 @@ def room_plan(views: list[photo.View], room_id: str = "R1") -> tuple[dict | None
     # photo k faces wall k clockwise: even k -> dimension A, odd k -> dimension B
     A, B = [], []
     for k, o in enumerate(obs):
-        scale_sig = model["scale_rel"]
-        ls = np.hypot(o.length_sig, scale_sig * o.length) * (1 if o.complete else 3)
-        ds = np.hypot(INSET_SIG, scale_sig * o.depth)
+        ls = np.hypot(o.length_sig, SCALE_IND * o.length) * (1 if o.complete else 3)
+        ds = np.hypot(INSET_SIG, SCALE_IND * o.depth)
         (A if k % 2 == 0 else B).append((o.length, ls))
         (B if k % 2 == 0 else A).append((o.depth + INSET, ds))
     if not B:
         notes.append("only one wall photographed: second dimension from depth only")
     a, sa = _combine(A)
     b, sb = _combine(B) if B else (obs[0].depth + INSET, INSET_SIG)
-    Hs = [o.ceiling for o in obs if o.ceiling]
+    # common-mode metric scale: fuse MoGe (s=1 +- SCALE_BIAS) with every door head
+    # seen (s = prior / measured). Per-photo noise is already in sa/sb.
+    heads = [o_[4] for o in obs for o_ in o.openings if o_[0] == "door" and o_[4] and 1.7 < o_[4] < 2.5]
+    est = [(1.0, SCALE_BIAS)] + [(DOOR_HEAD[0] / h, np.hypot(DOOR_HEAD[1] / h, 0.01)) for h in heads]
+    w_ = np.array([1 / e[1] ** 2 for e in est])
+    scale = float(np.sum(w_ * np.array([e[0] for e in est])) / w_.sum())
+    scale_sig = float(1 / np.sqrt(w_.sum()))
+    notes.append(f"metric scale x{scale:.3f} +-{100 * scale_sig:.1f}% from MoGe"
+                 + (f" + {len(heads)} door head(s)" if heads else " only"))
+    a, b = a * scale, b * scale
+    sa = float(np.hypot(sa * scale, scale_sig * a))
+    sb = float(np.hypot(sb * scale, scale_sig * b))
+    Hs = [o.ceiling * scale for o in obs if o.ceiling]
     H = float(np.median(Hs)) if Hs else None
     sH = float(np.hypot(np.std(Hs) / np.sqrt(len(Hs)) if len(Hs) > 1 else 0.02,
-                        model["scale_rel"] * H)) if H else None
+                        scale_sig * H)) if H else None
     # rectangle, clockwise from (0,0): wall k is faced by photo k
     V = np.array([[0, 0], [a, 0], [a, b], [0, b]], float)
     sides = [(V[3], V[2]), (V[2], V[1]), (V[1], V[0]), (V[0], V[3])]   # N, E, S, W
@@ -173,10 +189,14 @@ def room_plan(views: list[photo.View], room_id: str = "R1") -> tuple[dict | None
         o.view.T, o.view.scale = _place(o, p, q, outward[k]), 1.0
         d = (q - p) / max(np.linalg.norm(q - p), 1e-9)
         for kind, s0, s1, sg, head, sill in o.openings:
+            s0, s1 = s0 * scale, s1 * scale
+            head = head * scale if head else head
+            sill = sill * scale if sill is not None else sill
             oid = f"{room_id}.O{len(openings) + 1}"
             c = p + d * (0.5 * (s0 + s1))
             openings.append({"id": oid, "kind": kind, "wall_id": walls[k]["id"],
-                             "width": U.measure(s1 - s0, np.hypot(sg, model["sigma_face"]), model),
+                             "width": U.measure(s1 - s0, float(np.sqrt(sg ** 2 + model["sigma_face"] ** 2
+                                                                       + (scale_sig * (s1 - s0)) ** 2)), model),
                              "height": U.measure(head, 0.05, model) if head else None,
                              "sill": U.measure(sill, 0.05, model) if sill is not None else None,
                              "center": c.round(3).tolist(), "outward": outward[k],
@@ -190,5 +210,6 @@ def room_plan(views: list[photo.View], room_id: str = "R1") -> tuple[dict | None
     plan = {"tier": "photo", "calibrated": model["calibrated"], "rooms": [room],
             "adjacency": [], "footprint_area": room["floor_area"],
             "levels": {"floor_y": 0.0, "ceiling_y": H}, "layout": "rectangle-from-wall-photos",
-            "wall_photos": len(obs)}
+            "wall_photos": len(obs), "scale": {"factor": scale, "sigma": scale_sig,
+                                                "door_heads": len(heads)}}
     return plan, notes
