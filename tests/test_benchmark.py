@@ -58,3 +58,15 @@ def test_calibration_factor():
     rng = np.random.default_rng(0)
     cal = [(e, 0.01) for e in rng.normal(0, 0.02, 400)]      # true sigma 2x the claimed one
     assert 1.7 < calibrate({"lidar": cal})["lidar"]["k"] < 2.3
+
+
+def test_calibration_is_idempotent(tmp_path):
+    from benchmark.evaluate import write_calibration
+    f = tmp_path / "calibration.json"
+    fit = {"video": {"k": 2.3, "n": 40}}
+    write_calibration(fit, f)
+    write_calibration(fit, f)                       # re-run must not compound
+    write_calibration({"lidar": {"k": 1.1, "n": 30}}, f)
+    import json
+    cal = json.loads(f.read_text())
+    assert cal["video"]["k"] == 2.3 and cal["lidar"]["k"] == 1.1

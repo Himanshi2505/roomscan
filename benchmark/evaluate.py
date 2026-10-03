@@ -203,6 +203,17 @@ def calibrate(cal_by_tier: dict) -> dict:
     return out
 
 
+def write_calibration(k_fit: dict, path: Path) -> None:
+    """Store fitted k per tier. calibrate() fits k against the raw sigmas, so
+    the fit is already absolute: store it as-is (multiplying by the previously
+    stored k compounded on every re-run). Tiers not in k_fit are kept."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    cal = json.loads(path.read_text()) if path.exists() else {}
+    for tier, v in k_fit.items():
+        cal[tier] = {"k": round(v["k"], 3), "n": v["n"]}
+    path.write_text(json.dumps(cal, indent=1))
+
+
 # ------------------------------------------------------------------ driver
 
 def run_capture(cap: dict, rerun: bool) -> dict:
@@ -244,11 +255,7 @@ def main(argv=None):
     k = calibrate(cal)
     if a.calibrate and k:
         from roomscan.uncertainty import CAL_PATH
-        CAL_PATH.parent.mkdir(exist_ok=True)
-        old = json.loads(CAL_PATH.read_text()) if CAL_PATH.exists() else {}
-        for tier, v in k.items():
-            old[tier] = {"k": round(v["k"] * old.get(tier, {}).get("k", 1.0), 3)}
-        CAL_PATH.write_text(json.dumps(old, indent=1))
+        write_calibration(k, CAL_PATH)
     results = {"captures": scored, "repeatability": reps, "calibration_fit": k}
     (OUT / "results.json").write_text(json.dumps(results, indent=1, default=float))
     from benchmark.report import write_report
