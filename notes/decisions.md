@@ -169,3 +169,13 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
   CI [5.34, 8.21] vs LiDAR 8.19 (just inside). Per-wall: 2 of the 3 longest
   sorted walls fall outside their CI -> video intervals still too narrow;
   needs calibration on a real protocol video.
+
+## D18. Provisional video interval factor k = 2.1
+- Stand-in video vs LiDAR, longest walls paired by sorted length: z = |err|/sigma
+  = 1.88, 3.13, 14.85, 3.27, 2.01, 3.32. The 14.85 pair is a pairing artifact
+  (the video room's outline differs, so unrelated walls were matched; a 44%
+  "error"). Full coverage of the 5 genuine pairs needs k = 2.02; all 6 would
+  need 5.5. Chose 2.1. Outline errors are not fixable by wider length
+  intervals; the partial-coverage warning (D17) is what flags them.
+- After: 5/5 genuine walls and the room area (8.19 in [3.76, 9.79]) inside
+  their 90% CIs. Provisional: one harsh clip; benchmark calibration replaces it.

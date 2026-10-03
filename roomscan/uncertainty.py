@@ -23,7 +23,9 @@ CAL_PATH = Path(__file__).resolve().parent.parent / "config" / "calibration.json
 # Priors: sigma_face [m], scale_rel [-], drift_rel [-/m of walked path]
 PRIORS = {
     "lidar": {"sigma_face": 0.006, "scale_rel": 0.003, "drift_rel": 0.002, "k": 1.0},
-    "video": {"sigma_face": 0.015, "scale_rel": 0.012, "drift_rel": 0.006, "k": 1.0},
+    # video k: provisional, from the stand-in video vs LiDAR (notes D18): 5 wall
+    # pairs need k = 2.02 for full coverage. Replaced by benchmark calibration.
+    "video": {"sigma_face": 0.015, "scale_rel": 0.012, "drift_rel": 0.006, "k": 2.1},
     "photo": {"sigma_face": 0.030, "scale_rel": 0.035, "drift_rel": 0.0, "k": 1.0},
 }
 
