@@ -100,6 +100,37 @@ def _manhattan_angle(N):
     return float(np.angle(np.sum(np.exp(4j * th))) / 4)
 
 
+def solve_pose_graph(x0: np.ndarray, odo: list, lc: list, normals: list, man: float,
+                     odo_sig=(ODO_SIG_XY, ODO_SIG_REL, ODO_SIG_YAW),
+                     lc_sig=(LC_SIG_XY, LC_SIG_YAW)) -> np.ndarray:
+    """(x, z, yaw) per node. odo/lc: (i, j, Z) with Z = measured T_i^-1 T_j (SE2).
+    normals[k]: wall normals (x,z) of node k in its own frame (Manhattan prior).
+    Shared by the LiDAR (submap) and video (keyframe) tiers."""
+    def resid(x):
+        X = x.reshape(-1, 3)
+        T = [_se2(*p) for p in X]
+        r = []
+        for edges, is_odo in ((odo, True), (lc, False)):
+            for i, j, Z in edges:
+                ex, ez, eth = _se2_params(np.linalg.inv(Z) @ np.linalg.inv(T[i]) @ T[j])
+                if is_odo:
+                    sxy = odo_sig[0] + odo_sig[1] * np.linalg.norm(Z[:2, 2])
+                    r += [ex / sxy, ez / sxy, eth / odo_sig[2]]
+                else:
+                    r += [ex / lc_sig[0], ez / lc_sig[0], eth / lc_sig[1]]
+        for k, n in enumerate(normals):       # Manhattan prior per node
+            if len(n) < 50:
+                continue
+            a = _manhattan_angle(n) - X[k, 2]  # node's wall angle in world under X
+            dlt = np.angle(np.exp(4j * (a - man))) / 4
+            r.append(dlt / MAN_SIG_YAW)
+        r += list((X[0] - x0[:3]) / 1e-4)      # gauge: first node fixed
+        return np.array(r)
+
+    sol = least_squares(resid, x0, loss="soft_l1", f_scale=3.0, max_nfev=200)
+    return sol.x.reshape(-1, 3)
+
+
 def correct_drift(cap: ss.LidarCapture):
     frames, groups = _submaps(cap)
     info = {"method": "2D submap pose graph: ARKit odometry + ICP loop closures "
@@ -132,27 +163,7 @@ def correct_drift(cap: ss.LidarCapture):
             lc.append((i, j, T))
     info["loop_closures"] = len(lc)
 
-    def resid(x):
-        X = x.reshape(-1, 3)
-        T = [_se2(*p) for p in X]
-        r = []
-        for edges, is_odo in ((odo, True), (lc, False)):
-            for i, j, Z in edges:
-                ex, ez, eth = _se2_params(np.linalg.inv(Z) @ np.linalg.inv(T[i]) @ T[j])
-                if is_odo:
-                    sxy = ODO_SIG_XY + ODO_SIG_REL * np.linalg.norm(Z[:2, 2])
-                    r += [ex / sxy, ez / sxy, eth / ODO_SIG_YAW]
-                else:
-                    r += [ex / LC_SIG_XY, ez / LC_SIG_XY, eth / LC_SIG_YAW]
-        for k, (_, n) in enumerate(sub):       # Manhattan prior per submap
-            a = _manhattan_angle(n) - X[k, 2]  # submap wall angle in world under X
-            dlt = np.angle(np.exp(4j * (a - man))) / 4
-            r.append(dlt / MAN_SIG_YAW)
-        r += list((X[0] - x0[:3]) / 1e-4)      # gauge: first anchor fixed
-        return np.array(r)
-
-    sol = least_squares(resid, x0, loss="soft_l1", f_scale=3.0, max_nfev=200)
-    X = sol.x.reshape(-1, 3)
+    X = solve_pose_graph(x0, odo, lc, [n for _, n in sub], man)
     corr = [_se2(*X[k]) @ a2d_inv[k] for k in range(len(groups))]   # world -> world fix
     info["correction_m"] = round(float(np.max(np.linalg.norm(X[:, :2] - x0.reshape(-1, 3)[:, :2], axis=1))), 4)
     info["max_yaw_correction_deg"] = round(float(np.degrees(np.max(np.abs(

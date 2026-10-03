@@ -27,7 +27,10 @@ def _room_levels(c: OrientedCloud, P: RoomPolygon, floor_y: float):
     return fl, ce
 
 
-def build_plan(c: OrientedCloud, tier: str, path_length: float = 0.0) -> dict:
+def build_plan(c: OrientedCloud, tier: str, path_length: float = 0.0,
+               single_room: bool = False) -> dict:
+    """single_room=True: the capture is one room by construction (a photo-tier
+    folder), so skip watershed splitting and keep the largest interior region."""
     model = U.load_model(tier)
     floor, ceil = floor_ceiling(c)
     if floor is None:
@@ -35,7 +38,15 @@ def build_plan(c: OrientedCloud, tier: str, path_length: float = 0.0) -> dict:
     faces = extract_faces(c, floor.y, ceil.y if ceil else None)
     g = R.make_grid(c)
     W = R.wall_raster(g, faces)
-    lab = R.segment_rooms(R.interior_mask(c, g, floor.y, W), W)
+    I = R.interior_mask(c, g, floor.y, W)
+    if single_room:
+        from scipy import ndimage as ndi
+        lab, n = ndi.label(I)
+        if n > 1:
+            sizes = ndi.sum(I, lab, range(1, n + 1))
+            lab = (lab == 1 + int(np.argmax(sizes))).astype(np.int32)
+    else:
+        lab = R.segment_rooms(I, W)
     ks = list(range(1, lab.max() + 1))
     masks = [lab == k for k in ks]
     polys = [fit_polygon(m, g, faces) for m in masks]

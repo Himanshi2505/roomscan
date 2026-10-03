@@ -73,3 +73,31 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
 - Evidence it helps (no GT yet): occupied 2 cm wall cells 34,795 -> 32,881
   (-5.5%, crisper walls = more consistent poses). Ablation: --no-drift.
 - Cost: 149 s on CPU (to optimise). Plan changes (room merge R4) need GT.
+
+## D10. Photo/video depth: MoGe-2 (MIT) over MASt3R/VGGT (non-commercial)
+- Metric point map + intrinsics + normals from one image; CPU-capable.
+- Outputs cached by content hash (spec allows deterministic caches; live path
+  runs when cache is empty).
+
+## D11. Photo tier is layout-first, not feature-first
+- Stand-in photos (6 frames of the single-room video): 0/15 pairs registered
+  with SIFT + point-map RANSAC. One frame had 1 keypoint: white walls are
+  textureless. Real homes look like this, so features can't be the foundation.
+- Geometry check of the old protocol (corner -> opposite corner, 1x lens):
+  ~50 deg HFOV sees only part of the two far walls; opposite-corner photos
+  share nothing -> under-constrained even with perfect matching.
+- New protocol: 0.5x ultra-wide, back to the middle of a wall, photograph the
+  opposite wall, clockwise. Each photo measures one wall corner-to-corner on
+  its own (side-wall faces = corners), plus camera->wall depth which estimates
+  the other dimension. Opposite photos = independent estimates; their scatter
+  inflates the interval (Birge ratio). Rectangles only in this path; rectilinear
+  rooms fall back to feature registration when texture allows. Known limit.
+
+## D12. Damage: zero-shot CLIP made conservative after an audit
+- First version on the (undamaged) single-room scan: 11 detections up to
+  p=0.99, all false (wood grain -> "water stain", calendar -> "hole").
+- Added: benign prompt bank (wood, paper, furniture, frames, tiles, mirror,
+  blur), cosine margin damage-vs-benign >= 0.02, blob-shape test (3-50% of the
+  patch deviates from its own surface colour), blur gate, >= 2 views.
+  -> 2 single-view detections left, both still false. Thresholds to be set on
+  the staged-damage benchmark room (fix-loop candidate).
