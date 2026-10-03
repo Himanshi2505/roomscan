@@ -6,13 +6,13 @@
 
 ### Tier A: Photos (any iPhone 15 or newer, native Camera app)
 
-1. Camera app → **Photo** mode, **1×** lens (not 0.5×, not 2×), flash **off**, Live Photo doesn't matter. **Settings → Camera → Formats → Most Compatible** (JPEG). Location access for Camera can stay on or off.
-2. For **each room**, take exactly these photos, in this order:
-   1. Stand in **each corner** of the room, with your back in the corner, and photograph the **opposite corner**. Tilt the phone slightly down so that **both the floor line and the ceiling line** are visible. *(4 photos for a rectangular room; one per corner for L-shaped rooms, up to 6.)*
-   2. Stand **in each doorway** of the room and take one photo **into the next room**. *(One per doorway.)*
-   3. Total per room: **2 to 8 photos**. If you are over 8, drop doorway photos first.
-3. **Do not** photograph mirrors head-on; stand so that mirrors are seen at an angle.
-4. **Hand-off:** create one folder per room named `01_kitchen`, `02_hall`, … on the laptop and copy that room's photos into it (AirDrop or cable: the **original** files, not screenshots). Put all room folders inside one folder, e.g. `flat_photos/`.
+1. Camera app → **Photo** mode → tap **0.5×** (ultra-wide). Flash **off**. Leave all other camera settings at their defaults. Hold the phone **upright (portrait)** at chest height, screen facing you, **level** (don't tilt it up or down).
+2. For **each room**, in this order:
+   1. **Wall photos (one per wall, going clockwise round the room):** stand with your **back touching the middle of a wall** and take one photo of the **opposite wall**. Check on screen that **both ends (corners) of the opposite wall** and **both the floor line and the ceiling line** are visible; if not, step to the side until they are. Then move clockwise to the middle of the next wall and repeat. A rectangular room = **4 wall photos**.
+   2. **Doorway photos:** stand **in each doorway** of the room and take one photo **into the next room**.
+   3. Total per room: **2 to 8 photos**. If you would go over 8, drop doorway photos first, never wall photos.
+3. If a wall is blocked by a wardrobe or a bed, still stand at its middle and photograph the opposite wall; furniture in the photo is fine as long as the corners show.
+4. **Hand-off:** on the laptop, create one folder per room named `01_kitchen`, `02_hall`, … and copy that room's photos into it (AirDrop or cable, **original files**, not screenshots, keep the file names; they record the shooting order). Put all room folders inside one folder, e.g. `flat_photos/`.
 5. Run: `python -m roomscan run flat_photos`
 
 ### Tier B: Video (any iPhone 15 or newer, native Camera app)
