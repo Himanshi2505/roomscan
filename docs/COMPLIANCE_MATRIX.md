@@ -10,7 +10,7 @@ Status key:
 | 1 | Capture route: stock protocol (Part 1, Route 2) | `docs/CAPTURE_PROTOCOL.md` | one-page protocol, all three tiers | done; walk-through by a non-engineer pending |
 | 2 | Photo tier: 2–8 stills per room, no depth/poses (Part 1.1) | `roomscan/tiers/photo.py`, `roomscan/tiers/photo_layout.py`, `roomscan/mono.py` | per-room plan from photos | built |
 | 3 | Photo folders → one stitched whole-property plan (Part 1.1, gate) | `roomscan/stitch.py`, `roomscan/pipeline.py::_photo` | stitched plan, adjacency, no overlaps | built |
-| 4 | Video tier: handheld walkthrough (Part 1.2) | `roomscan/tiers/video.py` | multi-room plan from `.MOV` | built |
+| 4 | Video tier: handheld walkthrough (Part 1.2) | `roomscan/tiers/video.py` | multi-room plan from `.MOV` | built; **fails ±3% on third-party data** (18% walls, 21 min CPU) |
 | 5 | LiDAR tier: depth, poses, intrinsics (Part 1.3) | `roomscan/io/strayscanner.py`, `roomscan/tiers/lidar.py` | multi-room plan | done: 3 sample captures + third-party laser-GT validation (`docs/PUBLIC_VALIDATION.md`) |
 | 6 | Device matrix with honest accuracy per tier (Part 1) | `docs/DEVICE_MATRIX.md` | table | built; accuracy column needs captures |
 | 7 | Per-room plan: walls, ceiling height, floor area, openings (Part 2) | `roomscan/plan.py`, `roomscan/geometry/*` | `result.json` → `rooms[]` | done (LiDAR), built (photo/video) |

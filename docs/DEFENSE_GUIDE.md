@@ -62,7 +62,7 @@ They come from **third-party** laser ground truth (Apple ARKitScenes), labelled 
 
 ## 3. Weaknesses to state before they ask
 - **No own benchmark captures, no Polycam head-to-head.** Those need a phone and a property; the harness is built and tested.
-- **The video tier is the least reliable.** Its trajectory fragments on textureless walls. The output then keeps the largest segment, warns, and widens intervals.
+- **The video tier is the least reliable.** On a real third-party walkthrough: walls off by 18%, ceiling +52 cm, 21 min on CPU. It fails the 3% gate. Say so plainly: its intervals were wide enough to contain the truth, so it doesn't produce confident garbage, but it isn't accurate yet. Monocular scale and the pose distortion are the causes.
 - **Room segmentation** can split rooms at free-standing furniture or merge them through wide openings. The measurement core is accurate; the room layer above it is the weak point.
 - **Damage detection is zero-shot CLIP.** False positives went from 11 to 2 after an audit; recall is untested.
 - **CPU-only:** about 10 s per image for photo and video.
