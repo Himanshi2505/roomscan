@@ -1,0 +1,62 @@
+{
+ "property": "arkitscenes_421380",
+ "source": "THIRD-PARTY public data (Apple ARKitScenes, visit 421380), not our capture. Supplementary validation only.",
+ "measured_with": "Static laser scan 170107 (ARKitScenes), every 20th point; wall faces = histogram peaks of PCA-normal points (tools/laser_gt.py), read from out/laser_gt/room_zoom.png",
+ "note": "N and E walls fully observed corner to corner. S wall seen from x~0.3 to the E corner and W wall to z~1.6; an opening (open door / glass) at the SW corner hides the rest, so S and W assume the rectangle continues. Openings omitted: jambs not clearly visible, so a width would be invented.",
+ "faces": {
+  "N": "z=-0.4536 (face 17)",
+  "E": "x=1.5685 (face 8)",
+  "S": "z=2.5253 (face 23)",
+  "W": "x=-1.2572 (face 0)"
+ },
+ "rooms": {
+  "room": {
+   "walls": [
+    {
+     "id": "N",
+     "length": 2.826
+    },
+    {
+     "id": "E",
+     "length": 2.979
+    },
+    {
+     "id": "S",
+     "length": 2.826
+    },
+    {
+     "id": "W",
+     "length": 2.979
+    }
+   ],
+   "ceiling_height": 2.315,
+   "openings": []
+  }
+ },
+ "adjacency": [],
+ "footprint_area": 8.42,
+ "gt_faces": {
+  "N": [
+   "z",
+   1,
+   -0.4536
+  ],
+  "S": [
+   "z",
+   -1,
+   2.5253
+  ],
+  "W": [
+   "x",
+   1,
+   -1.2572
+  ],
+  "E": [
+   "x",
+   -1,
+   1.5685
+  ]
+ },
+ "laser_ceiling_height": 2.3149,
+ "note_frames": "gt_faces positions are in the laser frame produced by tools/laser_gt.py load_aligned()"
+}

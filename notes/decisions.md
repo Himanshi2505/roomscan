@@ -198,3 +198,21 @@ Scripts that regenerate the cited numbers: `tools/README.md`.
   0.14 m on Z vs 0.99 m on Y). Converter rotates (x, y, z) -> (x, z, -y).
   Result: floor and ceiling found, ceiling height 2.335 m, camera 1.59 m
   above the floor; `roomscan check` passes both recordings.
+
+## D20. First real accuracy numbers (ARKitScenes visit 421380, third-party)
+- GT from laser scan 170107 (tools/laser_gt.py): room 2.826 x 2.979 m,
+  ceiling 2.315 m (iPad LiDAR fusion: 2.335 m, sensors agree to 2 cm).
+- Plans vs GT could not be compared naively: both recordings cover more than
+  the GT room (south-west opening; recording 2 also the north room).
+  Outline-to-laser FFT alignment was too weak (score 0.22-0.24).
+- Point-cloud registration (tools/register_to_laser.py; 2D point-to-plane ICP
+  from 4 quarter turns x start grid; accept >= 0.7 inliers at 5 cm, RMSE <= 3 cm):
+  recording 1 accepted (0.816, 2.1 cm); recording 2 rejected with drift on
+  (0.426) and off (0.452): smeared fan of points + coverage outside the scan.
+- Face-level accuracy, recording 1 (tools/face_accuracy.py; distances between
+  opposite faces in our own cloud, so registration can't flatter them):
+  N-S -0.8 cm, W-E -0.3 cm, ceiling +1.9 cm (fails the 1.5 cm gate).
+- Plan level: room segmentation splits the room in two (R1 6.0 m2 + R2 4.1 m2
+  that also includes space beyond the opening) -> polygon wall lengths wrong
+  although faces are right. Fix-loop candidates: (1) segmentation split,
+  (2) ceiling +1.9 cm bias, (3) recording 2's 2.4 m drift correction.

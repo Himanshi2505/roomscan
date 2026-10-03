@@ -234,12 +234,17 @@ def main(argv=None):
     ap.add_argument("--rerun", action="store_true")
     ap.add_argument("--calibrate", action="store_true")
     ap.add_argument("--captures", default=str(ROOT / "captures.json"))
+    ap.add_argument("--gt-dir", default=str(ROOT / "gt"),
+                    help="ground-truth folder (benchmark/public_gt for third-party validation)")
+    ap.add_argument("--out", default=str(ROOT / "out"), help="report/results folder")
     a = ap.parse_args(argv)
+    global OUT
+    OUT = Path(a.out)
     caps = json.loads(Path(a.captures).read_text())
     OUT.mkdir(parents=True, exist_ok=True)
     scored, cal = {}, {}
     for cap in caps:
-        gt = json.loads((ROOT / "gt" / f"{cap['gt']}.json").read_text())
+        gt = json.loads((Path(a.gt_dir) / f"{cap['gt']}.json").read_text())
         res = run_capture(cap, a.rerun)
         s = score_capture(cap, res, gt)
         s["gates"] = gates(cap["tier"], s)
