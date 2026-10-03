@@ -69,4 +69,6 @@ notes/decisions.md         every design decision with its evidence
 | MoGe-2 ViT-L / ViT-S (Microsoft) | metric point maps, normals, intrinsics for photo/video | MIT | `scripts/fetch_weights.py` |
 | OpenCLIP ViT-B-32, LAION-2B (LAION) | zero-shot damage classification | MIT | auto-downloaded on first run to `weights/clip` |
 
+**Third-party data:** Apple's ARKitScenes (one scene, iPad Pro LiDAR with laser ground truth) is used *only* as clearly labelled supplementary validation, fetched by `tools/fetch_arkitscenes.py`, never committed. See `docs/PUBLIC_VALIDATION.md`.
+
 Nothing calls our own infrastructure. Model outputs are cached under `out/cache` keyed by input hash, so re-runs replay deterministically. Delete that folder to force the live path.

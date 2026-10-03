@@ -1,6 +1,6 @@
 # roomscan: technical report
 
-*Draft. Sections marked ⏳ are filled from `benchmark/out/REPORT.md` once the benchmark captures exist. Design evidence lives in `notes/decisions.md` (D1–D15).*
+*Sections marked ⏳ need our own benchmark captures, which don't exist yet. Real-data numbers below come from **third-party** public data (Apple ARKitScenes, `docs/PUBLIC_VALIDATION.md`), clearly labelled. Design evidence lives in `notes/decisions.md` (D1–D22); `tools/README.md` maps each number to the script that regenerates it.*
 
 ## 1. Architecture
 
@@ -57,15 +57,17 @@ The first design (corner photos plus SIFT registration) registered **0 of 15** p
 
 ### 2.2 Video tier
 
-Keyframes are chosen by tracking quality: KLT corners are tracked through every frame, and a new keyframe starts when fewer than 30% survive. On the stand-in clip, fixed 1 fps keyframes broke the trajectory into 15 segments. ⏳ adaptive result. Scale is never chained, because each keyframe keeps MoGe's own metric scale, so scale error doesn't random-walk. The protocol ends the walk where it began, which guarantees a loop closure.
+Keyframes are chosen by tracking quality: KLT corners are tracked through every frame, and a new keyframe starts when fewer than 30% survive. On a stand-in clip (a fast close-range sweep, harsher than the protocol), fixed 1 fps keyframes broke the trajectory into 15 segments. Adaptive keyframing, an ICP fallback and close-up rejection brought this to 6. When tracking breaks, the plan keeps only the largest segment, warns about partial coverage, and widens intervals by the pose-graph distortion (D16–D18). **The video tier is the least reliable tier**, and it has not yet been tested on a protocol-conforming capture. Scale is never chained, because each keyframe keeps MoGe's own metric scale, so scale error doesn't random-walk. The protocol ends the walk where it began, which guarantees a loop closure.
 
 ## 3. Drift handling
 
-ARKit and visual odometry are gravity-aligned, so the graph is solved in (x, z, yaw).
+ARKit and visual odometry are gravity-aligned, so the graph is solved in (x, z, yaw). Height is handled separately (below).
 - **Nodes:** 1.5 m submaps (LiDAR) or keyframes (video).
 - **Factors:** relative odometry; ICP (LiDAR) or feature (video) loop closures with a robust loss; a **Manhattan yaw prior** per node, which is the plane-anchored correction that pulls each node's walls to the global 90° grid.
 
 On the 9-room sample apartment: 36 submaps, 3 loop closures, maximum correction 0.55 m / 2.7°. Without ground truth the evidence is internal: wall crispness (occupied 2 cm wall cells) improves 5.5% with correction on (D9). Solver time went from 478 s to 30 s with an unchanged solution (D15). ⏳ footprint ablation vs ground truth (`--no-drift`).
+
+**Vertical drift.** The original design assumed ARKit height drift is negligible (D9). Real data proved it wrong: on ARKitScenes 42445021 the floor reads up to +3.6 cm high during one stretch of a 48 s walk, and it follows *time*, not place. A **floor-anchored vertical correction** now removes, per 2 s window, that window's floor offset from its poses, interpolating where no floor is seen. Per-window floor offsets went from −0.5…+3.6 cm to within ±0.4 cm (fix loop iteration 2).
 
 ## 4. Error budget
 
@@ -81,15 +83,35 @@ On the 9-room sample apartment: 36 submaps, 3 loop closures, maximum correction 
 
 ## 5. Calibration analysis
 
-k per tier is fitted conformally: the smallest k such that ≥90% of ground-truth residuals fall inside the interval (`benchmark.evaluate --calibrate`), and the coverage achieved is reported per tier. ⏳ k values, coverage before and after, and reliability per quantity type.
+k per tier is fitted conformally: the smallest k such that ≥90% of ground-truth residuals fall inside the interval (`benchmark.evaluate --calibrate`), and the coverage achieved is reported per tier. ⏳ k values: not fitted yet, because there are no benchmark captures; all intervals currently carry `calibrated: false`.
 
-## 6. Benchmark ⏳
+**Provisional:** video k = 2.1, from a stand-in clip against LiDAR (5 wall pairs needed 2.02; D18). The point is to avoid confident garbage before calibration exists.
 
-Gates at all three tiers, the repeatability table, the head-to-head (app and version) and timing: see `benchmark/out/REPORT.md`.
+## 6. Benchmark
 
-## 7. Fix loop ⏳
+⏳ **Our own benchmark** (gates at all three tiers, the repeatability table, the head-to-head, timing) requires captures that don't exist yet; the harness is built and tested (`benchmark/evaluate.py`).
 
-See `docs/FIX_LOOP.md`. Before and after regenerate from tags with `python scripts/fix_loop.py`.
+**Third-party validation** (ARKitScenes visit 421380, iPad Pro LiDAR, laser ground truth; `docs/PUBLIC_VALIDATION.md`):
+
+| measure | result |
+|---|---|
+| room dimensions, wall face to face | −0.8 cm and −0.3 cm |
+| ceiling height after the fix loop | R1 −1.29 cm, R2 −0.59 cm (gate ≤ 1.5 cm: pass) |
+| registration, recording 1 | 82% of wall points within 5 cm |
+| registration, recording 2 | rejected (coverage outside the scan) |
+| room segmentation | fails on this scene (split or merged) |
+
+The measurement core is accurate. The room-level layer above it is the weak point.
+
+## 7. Fix loop
+
+Full record: `docs/FIX_LOOP.md`. Each declaration was committed before its code; before and after regenerate from the tags with `python tools/fixloop_ceiling.py`.
+
+1. **First target, room segmentation.** Abandoned after three attempts (D21): the ground truth's walls at the opening were an assumption, so the gate couldn't be scored fairly. Kept from it: a principled, side-effect-free rule that furniture against a wall is not a wall.
+2. **Ceiling height, gate ≤ 1.5 cm.** Before: +1.51 / +3.01 cm (FAIL).
+   - **Iteration 1:** plane heights now come from raw horizontal points. The declared mechanism (voxel quantization) was wrong; isolation showed the cause is cross-surface mixing in voxels. Result: R1 passes, R2 fails.
+   - **Iteration 2:** floor-anchored vertical drift correction. Result: R1 −1.29, R2 −0.59 cm, so the **gate passes**.
+   - **Missed predictions, reported:** R1 was predicted within ±0.5 cm (a far-range ceiling bias remains), and the sample apartment's footprint moved +0.9% where no change was predicted.
 
 ## 8. Known failure modes
 
@@ -102,3 +124,7 @@ See `docs/FIX_LOOP.md`. Before and after regenerate from tags with `python scrip
 - **Closed doors** read as wall; the protocol requires open doors.
 - **CPU time:** photo and video tiers run ~10 s per image with MoGe-L. A GPU makes this about 20× faster.
 - **Low light and wet-look floors:** LiDAR confidence drops (filtered at confidence 2), and MoGe degrades in the dark. ⏳ measured.
+- **Furniture as walls:** long furniture faces can split rooms. Faces with evidence of standing against a wall are excluded; free-standing furniture can still split a room (D21).
+- **Wide openings:** gaps wider than 1.6 m merge spaces into one room by design (open plan). A room with a very wide doorway reads as one space with the corridor.
+- **Far-range ceiling bias:** ceiling seen from 3–6 m at grazing angles reads ~2 cm low on LiDAR. It is not yet corrected, and it is the next fix-loop candidate.
+- **Video tracking on textureless walls:** trajectories fragment. The output is restricted to the largest segment and flagged.
