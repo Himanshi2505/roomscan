@@ -1,9 +1,11 @@
 """Video tier: handheld walkthrough clip, no depth, no poses.
 
-1. Keyframes at ~KF_FPS, skipping blurry frames (variance of Laplacian).
+1. Keyframes chosen by tracking quality: KLT corners are tracked through every
+   frame; a new keyframe starts when too few survive (blurry frames skipped).
 2. Per keyframe: MoGe-2 metric point map + gravity (photo.make_view).
-3. Visual-metric odometry: consecutive keyframes registered with the same
-   SIFT + point-map 4-DOF RANSAC as the photo tier. Scale is NOT chained
+3. Visual-metric odometry: the KLT correspondences between consecutive
+   keyframes, lifted by their MoGe point maps, give a 4-DOF RANSAC alignment
+   (SIFT matching as fallback). Scale is NOT chained
    (that would random-walk): every frame keeps MoGe's own metric scale, so the
    plan's scale error is MoGe's average bias, not an accumulated drift.
 4. Loop closures: non-consecutive keyframes within 2.5 m that register
@@ -22,51 +24,55 @@ from roomscan import drift as D
 from roomscan.geometry.cloud import OrientedCloud, voxel_downsample
 from roomscan.tiers import photo
 
-KF_FPS = 2.0
+KEEP_FRAC = 0.30      # new keyframe when < 30% of seeded corners survive
+MIN_GAP_S, MAX_GAP_S = 0.3, 2.0
 BLUR_MIN = 40.0
-MAX_KEYFRAMES = 400
+MAX_KEYFRAMES = 400   # ~10 s each with MoGe-L on CPU (notes D13)
 
 
-def keyframes(path: Path) -> list[tuple[int, np.ndarray]]:
+def track_keyframes(path: Path):
+    """One pass over the clip: KLT-track corners frame to frame and start a new
+    keyframe when tracking degrades (tracked < KEEP_FRAC of the seeded corners),
+    after MAX_GAP_S at most, never closer than MIN_GAP_S. Blurry candidates are
+    skipped (the next sharp frame becomes the keyframe).
+
+    Returns keyframes [(frame_idx, rgb)] and, per consecutive pair, the tracked
+    pixel correspondences at MoGe inference resolution."""
+    from roomscan import mono
     cap = cv2.VideoCapture(str(path))
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-    step = max(1, int(round(fps / KF_FPS)))
-    out, i = [], 0
-    window = []
+    lk = dict(winSize=(21, 21), maxLevel=3,
+              criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01))
+    kfs, tracks = [], []
+    prev_g, p0, p, n_seed, last_kf = None, None, None, 0, -10 ** 9
+    i = 0
     while True:
-        ok = cap.grab()
+        ok, img = cap.read()
         if not ok:
             break
-        if i % max(1, step // 3) == 0:          # look at 3 candidates per slot, keep the sharpest
-            _, img = cap.retrieve()
-            small = cv2.resize(img, (480, int(480 * img.shape[0] / img.shape[1])))
-            sharp = cv2.Laplacian(cv2.cvtColor(small, cv2.COLOR_BGR2GRAY), cv2.CV_64F).var()
-            window.append((sharp, i, img))
-        if (i + 1) % step == 0 and window:
-            sharp, k, img = max(window, key=lambda x: x[0])
-            if sharp >= BLUR_MIN:
-                out.append((k, cv2.cvtColor(img, cv2.COLOR_BGR2RGB)))
-            window = []
+        rgb_small = mono.resize_long(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        g = cv2.cvtColor(rgb_small, cv2.COLOR_RGB2GRAY)
+        if p is not None and len(p):
+            p1, st, _ = cv2.calcOpticalFlowPyrLK(prev_g, g, p, None, **lk)
+            pb, st2, _ = cv2.calcOpticalFlowPyrLK(g, prev_g, p1, None, **lk)
+            good = (st.ravel() == 1) & (st2.ravel() == 1) &                 (np.linalg.norm((pb - p).reshape(-1, 2), axis=1) < 1.0)
+            p, p0 = p1[good], p0[good]
+        gap = (i - last_kf) / fps
+        degraded = p is None or len(p) < KEEP_FRAC * max(n_seed, 1) or gap >= MAX_GAP_S
+        if (not kfs or (degraded and gap >= MIN_GAP_S)) and                 cv2.Laplacian(g, cv2.CV_64F).var() >= BLUR_MIN:
+            if kfs:
+                tracks.append((p0.reshape(-1, 2).copy(), p.reshape(-1, 2).copy()))
+            kfs.append((i, cv2.cvtColor(img, cv2.COLOR_BGR2RGB)))
+            last_kf = i
+            seed = cv2.goodFeaturesToTrack(g, 1500, 0.005, 7)
+            p = seed.astype(np.float32) if seed is not None else np.zeros((0, 1, 2), np.float32)
+            p0, n_seed = p.copy(), len(p)
+        prev_g = g
         i += 1
-    if len(out) > MAX_KEYFRAMES:
-        sel = np.linspace(0, len(out) - 1, MAX_KEYFRAMES).astype(int)
-        out = [out[j] for j in sel]
-    return out
-
-
-def self_calibrated_fov(kfs, n: int = 10) -> float:
-    """One lens for the whole clip: median of MoGe's per-frame FOV estimates over
-    n spread keyframes, then every frame is inferred with that fixed FOV. Per-frame
-    FOV guesses scatter (fx ratio 0.89-1.66 vs ARKit on sample frames) and scale
-    error follows the FOV error (notes D14)."""
-    from roomscan import mono
-    sel = np.linspace(0, len(kfs) - 1, min(n, len(kfs))).astype(int)
-    fovs = []
-    for i in sel:
-        v = mono.infer(kfs[i][1])
-        w = v.points.shape[1]
-        fovs.append(np.degrees(2 * np.arctan(w / (2 * v.K[0, 0]))))
-    return float(np.median(fovs))
+    if len(kfs) > MAX_KEYFRAMES:
+        raise RuntimeError(f"{len(kfs)} keyframes > {MAX_KEYFRAMES}: clip too long for one run; "
+                           "split it per floor")
+    return kfs, tracks
 
 
 def _rigid(s, R, t):
@@ -81,17 +87,23 @@ def _se2_from(T):
     return D._se2(T[0, 3], T[2, 3], yaw)
 
 
-def odometry(views: list[photo.View]) -> tuple[list[np.ndarray], list[int], list]:
-    """Chained 4x4 poses (gravity frame k -> world); segment id per frame."""
+def odometry(views: list[photo.View], tracks=None) -> tuple[list[np.ndarray], list[int], list]:
+    """Chained 4x4 poses (gravity frame k -> world); segment id per frame.
+    KLT tracks between consecutive keyframes are tried first, SIFT as fallback."""
     T = [np.eye(4)]
     seg = [0]
     odo = []
     for k in range(1, len(views)):
-        r = None
-        for back in (1, 2, 3):                    # skip a bad frame if needed
+        r, back = None, 1
+        if tracks is not None:
+            qi, qj = tracks[k - 1]
+            r = photo.fit_correspondences(views[k - 1], views[k], qi.astype(np.float32),
+                                          qj.astype(np.float32), seed=k)
+        for back in ((1, 2, 3) if r is None else (1,)):   # skip a bad frame if needed
             if k - back < 0:
                 break
-            r = photo.register_pair(views[k - back], views[k], seed=k)
+            if r is None:
+                r = photo.register_pair(views[k - back], views[k], seed=k)
             if r is not None:
                 break
         if r is None:
@@ -107,12 +119,12 @@ def odometry(views: list[photo.View]) -> tuple[list[np.ndarray], list[int], list
 
 
 def build(path: Path, drift: bool = True):
-    kfs = keyframes(path)
+    kfs, tracks = track_keyframes(path)
     if len(kfs) < 3:
         raise RuntimeError("video too short or too blurry: fewer than 3 usable keyframes")
     fov = self_calibrated_fov(kfs)
     views = [photo.make_view(f"kf{k:06d}", rgb, fov) for k, rgb in kfs]
-    T, seg, odo_pairs = odometry(views)
+    T, seg, odo_pairs = odometry(views, tracks)
     info = {"method": "none (chained visual odometry as-is)", "enabled": False,
             "correction_m": None, "loop_closures": 0, "segments": int(max(seg) + 1)}
     if drift and len(views) > 3:

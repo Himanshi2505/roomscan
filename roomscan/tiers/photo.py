@@ -129,6 +129,15 @@ def register_pair(vi: View, vj: View, seed: int = 0):
         return None
     qj = vj.kp[[g.queryIdx for g in good]]
     qi = vi.kp[[g.trainIdx for g in good]]
+    return fit_correspondences(vi, vj, qi, qj, seed)
+
+
+def fit_correspondences(vi: View, vj: View, qi: np.ndarray, qj: np.ndarray, seed: int = 0):
+    """Pixel correspondences (qi in i, qj in j) -> similarity mapping j's gravity
+    frame into i's, via both views' metric point maps. None if weak.
+    Shared by SIFT matching (photos) and KLT tracking (video)."""
+    if len(qi) < MIN_INLIERS:
+        return None
     # geometric pre-filter with the fundamental matrix
     F, inl = cv2.findFundamentalMat(qj, qi, cv2.FM_RANSAC, 2.0, 0.999)
     if F is None:
