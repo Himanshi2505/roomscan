@@ -133,6 +133,34 @@ def _wall2d(v: photo.View, stride: int = 4):
     return P[m][:, [0, 2]], n2 / np.maximum(np.linalg.norm(n2, axis=1, keepdims=True), 1e-9)
 
 
+def camera_height(v: photo.View) -> float | None:
+    """Camera height above the floor this keyframe sees (its own gravity frame),
+    or None if no floor plane is visible."""
+    from roomscan.geometry.levels import _plane_height
+    P = v.mv.points[v.mv.mask] @ v.R_g.T
+    N = v.mv.normals[v.mv.mask] @ v.R_g.T
+    y = P[(N[:, 1] > 0.9) & (P[:, 1] < -0.5), 1]
+    lv = _plane_height(y, "floor", min_support=200)
+    return -lv.y if lv else None
+
+
+def level_heights(T: list[np.ndarray], heights: list[float | None]) -> list[np.ndarray]:
+    """Floor-anchored height: put every keyframe at its measured height above the
+    floor (floor = world y 0) instead of the chained vertical shifts, which drift
+    (stand-in: a phantom floor 1.9 m below the real one, D17). Keyframes without
+    a visible floor are interpolated from their neighbours."""
+    idx = [k for k, h in enumerate(heights) if h is not None]
+    if not idx:
+        return T
+    h_all = np.interp(np.arange(len(T)), idx, [heights[k] for k in idx])
+    out = []
+    for Tk, h in zip(T, h_all):
+        Tk = Tk.copy()
+        Tk[1, 3] = h
+        out.append(Tk)
+    return out
+
+
 def icp_pair(vi: photo.View, vj: photo.View):
     """Geometric fallback for textureless stretches: 2D point-to-plane ICP of j's
     wall points onto i's, started at 'no motion' (<= 2 s apart). Returns the
@@ -193,8 +221,20 @@ def build(path: Path, drift: bool = True):
     fov = self_calibrated_fov(kfs)
     views = [photo.make_view(f"kf{k:06d}", rgb, fov) for k, rgb in kfs]
     T, seg, odo_pairs = odometry(views, tracks)
+    # Segments have no relative pose between them; fusing them anyway produced a
+    # merged blob with confident intervals (D17). Keep only the largest one.
+    n_seg, n_total = int(max(seg) + 1), len(views)
+    seg = np.array(seg)
+    keep_id = int(np.bincount(seg).argmax())
+    keep = np.flatnonzero(seg == keep_id)
+    remap = {int(old): new for new, old in enumerate(keep)}
+    views = [views[i] for i in keep]
+    T = [T[i] for i in keep]
+    odo_pairs = [(remap[i], remap[j]) for i, j in odo_pairs if i in remap and j in remap]
+    seg = [0] * len(views)
+    coverage = {"segments": n_seg, "kept_keyframes": len(views), "total_keyframes": n_total}
     info = {"method": "none (chained visual odometry as-is)", "enabled": False,
-            "correction_m": None, "loop_closures": 0, "segments": int(max(seg) + 1)}
+            "correction_m": None, "loop_closures": 0, **coverage}
     if drift and len(views) > 3:
         x2 = [_se2_from(t) for t in T]
         x2_inv = [np.linalg.inv(a) for a in x2]
@@ -231,7 +271,8 @@ def build(path: Path, drift: bool = True):
         info = {"method": "2D keyframe pose graph: visual-metric odometry + feature loop "
                           "closures + Manhattan yaw prior", "enabled": True,
                 "correction_m": round(float(np.max(np.linalg.norm(X[:, :2] - pos, axis=1))), 4),
-                "loop_closures": len(lc), "segments": int(max(seg) + 1)}
+                "loop_closures": len(lc), **coverage}
+    T = level_heights(T, [camera_height(v) for v in views])
     clouds = []
     for k, (v, Tk) in enumerate(zip(views, T)):
         v.T, v.scale = Tk, 1.0
@@ -239,4 +280,7 @@ def build(path: Path, drift: bool = True):
     c = voxel_downsample(OrientedCloud.concat(clouds), 0.03)
     P = np.array([t[[0, 2], 3] for t in T])
     path_len = float(np.linalg.norm(np.diff(P, axis=0), axis=1).sum())
+    # how much the pose graph had to bend the trajectory, relative to its length:
+    # widens every interval by that fraction (plan.build_plan extra_rel)
+    info["distortion_rel"] = round(float(info["correction_m"] or 0.0) / max(path_len, 1.0), 4)
     return c, path_len, info, len(kfs), views

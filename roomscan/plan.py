@@ -28,10 +28,12 @@ def _room_levels(c: OrientedCloud, P: RoomPolygon, floor_y: float):
 
 
 def build_plan(c: OrientedCloud, tier: str, path_length: float = 0.0,
-               single_room: bool = False) -> dict:
+               single_room: bool = False, extra_rel: float = 0.0) -> dict:
     """single_room=True: the capture is one room by construction (a photo-tier
     folder), so skip watershed splitting and keep the largest interior region."""
     model = U.load_model(tier)
+    if extra_rel:   # e.g. trajectory distortion: widens every length/area interval
+        model["scale_rel"] = float(np.hypot(model["scale_rel"], extra_rel))
     floor, ceil = floor_ceiling(c)
     if floor is None:
         raise RuntimeError("no floor plane found: capture must show the floor")

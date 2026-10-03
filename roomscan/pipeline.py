@@ -155,11 +155,17 @@ def run(capture: Path, tier: str, drift: bool = True) -> dict:
         t = time.perf_counter()
         c, path, info["drift"], info["n_inputs"], info["views"] = video.build(vid, drift=drift)
         timing["reconstruction"] = round(time.perf_counter() - t, 2)
+        d = info["drift"]
+        if d["segments"] > 1:
+            warnings.append(f"video tracking broke into {d['segments']} pieces; the plan covers "
+                            f"only the largest ({d['kept_keyframes']}/{d['total_keyframes']} "
+                            "keyframes). Re-record walking slower, ~1 m from walls")
     M = yaw_matrix(manhattan_yaw(c))
     c = c.transformed(M)
     t = time.perf_counter()
     # drift scales with walked path only when poses are used uncorrected
-    plan = build_plan(c, tier, path_length=0.0 if info["drift"]["enabled"] else path)
+    plan = build_plan(c, tier, path_length=0.0 if info["drift"]["enabled"] else path,
+                      extra_rel=info["drift"].get("distortion_rel", 0.0))
     timing["plan"] = round(time.perf_counter() - t, 2)
     t = time.perf_counter()
     from roomscan import damage as DM

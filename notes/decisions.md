@@ -151,3 +151,21 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
   5 frames, each check is a MoGe run). Stand-in: 51 -> 45 keyframes,
   7 -> 6 segments, 38 odometry edges. Modest: the remaining breaks are not
   close-ups. Protocol already says walk ~1 m from walls.
+
+## D17. Video: honest output when tracking breaks; floor-anchored height
+- Step 3 measurement (stand-in vs LiDAR, same capture): 6 disconnected
+  segments fused into one blob, 3.7 m pose-graph correction, walls off by a
+  median 37 cm (15%), yet footprint CI 11.9-13.5 m2 vs ~24 m2 true:
+  confident garbage.
+- Fix A: keep only the largest connected segment, warn with coverage
+  (kept/total keyframes), widen every interval by the relative pose-graph
+  distortion (correction / path length) via plan.build_plan(extra_rel).
+- That exposed a crash: vertical drift from chained odometry put a phantom
+  floor 1.9 m under the real one. Fix B: floor-anchored height: each keyframe
+  sits at its own measured height above its visible floor (interpolated where
+  none is seen), like the Manhattan prior does for yaw.
+- After both: no crash, explicit partial-coverage warning, kept segment
+  22/45 keyframes with 5% distortion. Room R1 area 6.78 m2,
+  CI [5.34, 8.21] vs LiDAR 8.19 (just inside). Per-wall: 2 of the 3 longest
+  sorted walls fall outside their CI -> video intervals still too narrow;
+  needs calibration on a real protocol video.
