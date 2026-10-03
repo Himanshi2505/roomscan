@@ -101,3 +101,28 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
   patch deviates from its own surface colour), blur gate, >= 2 views.
   -> 2 single-view detections left, both still false. Thresholds to be set on
   the staged-damage benchmark room (fix-loop candidate).
+
+## D13. MoGe resolution level 0
+- CPU timings, one 640 px image: ViT-S 9.8 s (level 9) -> 3.2 s (level 0);
+  ViT-L 35.4 s -> 9.4 s. Depth shift vs level 9: ViT-L <= 1.4%, ViT-S up to 4%.
+
+## D14. MoGe metric scale vs LiDAR (24 upright frames, 3 captures)
+| config | median |scale-1| | p90 | median scale |
+|---|---|---|---|
+| ViT-S, guessed FOV | 15.3% | 23% | 0.928 |
+| ViT-S, true FOV | 10.7% | 33% | 0.902 |
+| ViT-L, guessed FOV | 6.2% | 17% | 0.950 |
+- Model size dominates; giving the true FOV did not help ViT-S. Photo tier
+  uses ViT-L. Per-photo scale noise is large -> averaged over the room's
+  photos (SCALE_IND) + common-mode bias (SCALE_BIAS) anchored by door heads.
+- First run fed MoGe sideways frames (Stray Scanner stores sensor-orientation
+  video): scales 0.68-1.63, discarded as an unfair test.
+
+## D15. Drift solver speed: 478 s -> 30 s on the 9-room scan, same answer
+- Profile: 340 s re-extracting wall points (full-res normals then striding),
+  103 s ICP, 33 s solve (Manhattan angle recomputed inside every residual).
+- Fixes: subsample depth before back-projection; precompute node angles;
+  cap ICP source points with a fixed seed.
+- ICP point cap sweep: 3000 -> 25 s but lost 1 of 3 loop closures and moved
+  poses 10 cm (rejected); 8000 -> 30 s, 3 closures, within 1.3 cm of the
+  full-resolution solution (chosen); 15000 -> 43 s, same as 8000.

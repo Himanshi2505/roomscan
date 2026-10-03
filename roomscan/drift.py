@@ -60,7 +60,11 @@ def _wall_pts(cap, frames, idx, T_anchor_inv):
     for i in idx[::4]:
         f = frames[i]
         d, K = cap.load_depth(f)
-        c = depth_to_cloud(d, K, f.T_wc, f.index, stride=4)
+        # subsample the depth map *before* back-projection (16x fewer pixels than
+        # computing full-res normals and striding afterwards: 340 s -> see D15)
+        d = d[::4, ::4]
+        K = K * np.array([[0.25], [0.25], [1.0]])
+        c = depth_to_cloud(d, K, f.T_wc, f.index, stride=1)
         m = (np.abs(c.normals[:, 1]) < 0.2) & (c.xyz[:, 1] > f.T_wc[1, 3] - 1.0)
         P.append(c.xyz[m][:, [0, 2]])
         N.append(c.normals[m][:, [0, 2]])
@@ -70,7 +74,9 @@ def _wall_pts(cap, frames, idx, T_anchor_inv):
     return P @ R.T + t, N @ R.T
 
 
-def _icp2d(src, dst, dst_n, T0, iters=20, max_d=0.15):
+def _icp2d(src, dst, dst_n, T0, iters=20, max_d=0.15, max_pts=8000):
+    if len(src) > max_pts:     # fixed seed keeps the run deterministic
+        src = src[np.random.default_rng(0).choice(len(src), max_pts, replace=False)]
     tree = cKDTree(dst)
     T = T0.copy()
     for _ in range(iters):
@@ -106,6 +112,10 @@ def solve_pose_graph(x0: np.ndarray, odo: list, lc: list, normals: list, man: fl
     """(x, z, yaw) per node. odo/lc: (i, j, Z) with Z = measured T_i^-1 T_j (SE2).
     normals[k]: wall normals (x,z) of node k in its own frame (Manhattan prior).
     Shared by the LiDAR (submap) and video (keyframe) tiers."""
+    # each node's wall angle in its own frame is constant: compute once, not in
+    # every residual call (the numeric Jacobian calls resid ~3N times/iteration)
+    node_ang = [(k, _manhattan_angle(n)) for k, n in enumerate(normals) if len(n) >= 50]
+
     def resid(x):
         X = x.reshape(-1, 3)
         T = [_se2(*p) for p in X]
@@ -118,10 +128,8 @@ def solve_pose_graph(x0: np.ndarray, odo: list, lc: list, normals: list, man: fl
                     r += [ex / sxy, ez / sxy, eth / odo_sig[2]]
                 else:
                     r += [ex / lc_sig[0], ez / lc_sig[0], eth / lc_sig[1]]
-        for k, n in enumerate(normals):       # Manhattan prior per node
-            if len(n) < 50:
-                continue
-            a = _manhattan_angle(n) - X[k, 2]  # node's wall angle in world under X
+        for k, a0 in node_ang:                # Manhattan prior per node
+            a = a0 - X[k, 2]                  # node's wall angle in world under X
             dlt = np.angle(np.exp(4j * (a - man))) / 4
             r.append(dlt / MAN_SIG_YAW)
         r += list((X[0] - x0[:3]) / 1e-4)      # gauge: first node fixed

@@ -336,7 +336,7 @@ def _pix_normals(X: np.ndarray) -> np.ndarray:
     return n
 
 
-def lidar_views(cap, poses: dict | None, M: np.ndarray, every_s: float = 1.0,
+def lidar_views(cap, poses: dict | None, M: np.ndarray, every_s: float = 2.0,
                 width: int = 640) -> list[DView]:
     """RGB keyframes (one per `every_s`) with LiDAR depth upsampled to RGB size."""
     frames = cap.depth_frames
