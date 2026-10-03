@@ -41,3 +41,15 @@ Each entry: what we chose, why, and the evidence. This is the defense crib sheet
 - Seeds: distance-to-wall > 0.55 m; doorways (half-width <= 0.45 m) can't seed.
 - Merge regions whose shared cut > 1.6 m (open-plan transition, not a door).
 - Result on the apartment scan: 9 regions, matching the visible layout.
+
+## D6. Room polygon = Manhattan line arrangement + greedy MDL simplification
+- First try (contour -> approxPolyDP -> snap) gave 14-16 jagged edges/room and
+  overlapping rooms: raster contours follow furniture, not walls.
+- Now: every measured wall face near the room proposes a line; lines cut the
+  plane into cells; a cell is "in" if the room mask covers >50% of it.
+  Lines are removed greedily while IoU - LAMBDA * n_lines doesn't drop.
+  Every final edge lies exactly on a measured face -> dimensions come from faces.
+- LAMBDA sweep on the apartment: 0.003 -> up to 20 edges/room (notches of
+  6-7 cm); 0.010 -> 4-10 edges, shapes match the visible walls. Chose 0.010.
+- Overlaps (gate: "no room overlaps") resolved by giving each overlap to the
+  room whose observed floor covers more of it.
