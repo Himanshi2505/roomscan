@@ -75,6 +75,21 @@ def track_keyframes(path: Path):
     return kfs, tracks
 
 
+def self_calibrated_fov(kfs, n: int = 10) -> float:
+    """One lens for the whole clip: median of MoGe's per-frame FOV estimates over
+    n spread keyframes, then every frame is inferred with that fixed FOV. Per-frame
+    FOV guesses scatter (fx ratio 0.89-1.66 vs ARKit on sample frames) and scale
+    error follows the FOV error (notes D14)."""
+    from roomscan import mono
+    sel = np.linspace(0, len(kfs) - 1, min(n, len(kfs))).astype(int)
+    fovs = []
+    for i in sel:
+        v = mono.infer(kfs[i][1])
+        w = v.points.shape[1]
+        fovs.append(np.degrees(2 * np.arctan(w / (2 * v.K[0, 0]))))
+    return float(np.median(fovs))
+
+
 def _rigid(s, R, t):
     T = np.eye(4)
     T[:3, :3] = R
