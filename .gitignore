@@ -12,3 +12,5 @@ weights/
 fixloop/
 # case-study brief from the company: kept locally, not published
 Applied_AI_Case_Study.pdf
+# third-party public data (ARKitScenes): fetched by script, never committed
+data/public/
