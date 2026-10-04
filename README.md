@@ -4,7 +4,9 @@ Phone capture → dimensioned whole-property floor plan, damage regions, conceal
 
 ## Fresh machine to first result (≈10 min)
 
-Requires Python 3.11–3.13 and git. CPU only; a CUDA GPU makes the photo/video tiers much faster.
+Requires Python 3.11–3.13 and git. Runs on CPU (measured: ~1 min per LiDAR room, ~10 s per photo, ~9.5 min per 48 s video).
+
+**Windows:** clone into a **short path** such as `C:\rs`. PyTorch installs files nested deeply enough to exceed Windows' 260-character path limit from a deep folder (`pip` fails with `OSError: [Errno 2]`). Alternatively, enable long paths: https://pip.pypa.io/warnings/enable-long-paths. A clean install measured **~8 min** (`pip install -r requirements.txt`).
 
 ```bash
 git clone <this repo> roomscan && cd roomscan
