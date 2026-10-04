@@ -64,7 +64,7 @@ The clip is 60 fps, 48 s, and decodes upright via its rotation metadata.
 | Largest room's walls vs the LiDAR plan of the same recording | median off 33 cm (**18%**), max 58 cm; mixed short and long, so not a single scale factor |
 | Ceiling height (R2) | 2.834 m vs laser 2.315 m (**+52 cm**) |
 | Intervals | R1 area 9.24 m², 90% CI [2.2, 16.3]: very wide, but contains the LiDAR value (honest, not useful) |
-| Time | 1,269 s on CPU |
+| Time | 1,269 s on CPU at first; **568 s** after one inference per keyframe (D23) |
 
 **Verdict:** the video tier **fails** the ±3% wall gate on this scene by a wide margin, and it is too slow on CPU for a live run. Its intervals widen instead of lying. Next candidates: scale and ceiling anchoring per keyframe, and fewer keyframes or a GPU.
 

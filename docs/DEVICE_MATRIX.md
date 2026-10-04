@@ -24,7 +24,7 @@ Capture apps: native Camera (photo, video), Stray Scanner (LiDAR, free). All thr
 | opening width | ±1 cm (jamb-to-jamb) *prior* | ±2 cm *prior* | ±4 cm *prior* | gate ≤2 cm on ≥85% |
 | metric scale | ARKit (LiDAR-anchored) | MoGe-2, self-calibrated FOV | MoGe-2 + EXIF focal length | MoGe vs LiDAR on sample frames: see notes D14 |
 | multi-room drift | pose graph, 2.7° / 0.55 m max correction on 9-room sample | pose graph + start=end loop | none (rooms independent, joined at doors) | notes D9 |
-| processing time (CPU, 8 cores) | ~3–6 min / 9 rooms | ~10 s per keyframe (2 fps) | ~10 s per photo | `timing_s` in every result |
+| processing time (this laptop, CPU only) | ~1 min (1 room) to ~4 min (9 rooms) | **~9.5 min** for a 48 s walkthrough (56 keyframes × ~10 s) | ~10 s per photo | `timing_s` in every result; D23 |
 
 ## What thins the data, and how intervals widen
 

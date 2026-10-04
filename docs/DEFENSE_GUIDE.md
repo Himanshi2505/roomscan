@@ -65,7 +65,7 @@ They come from **third-party** laser ground truth (Apple ARKitScenes), labelled 
 - **The video tier is the least reliable.** On a real third-party walkthrough: walls off by 18%, ceiling +52 cm, 21 min on CPU. It fails the 3% gate. Say so plainly: its intervals were wide enough to contain the truth, so it doesn't produce confident garbage, but it isn't accurate yet. Monocular scale and the pose distortion are the causes.
 - **Room segmentation** can split rooms at free-standing furniture or merge them through wide openings. The measurement core is accurate; the room layer above it is the weak point.
 - **Damage detection is zero-shot CLIP.** False positives went from 11 to 2 after an audit; recall is untested.
-- **CPU-only:** about 10 s per image for photo and video.
+- **CPU-only:** about 10 s per image. A 48 s video takes ~9.5 min (was 21 min, before one-inference-per-keyframe). Smaller images were tried and didn't help, because MoGe's cost is set by its token budget. A smaller model would be faster but 2× less accurate on scale, and I chose accuracy. A GPU should help, but that is unmeasured.
 
 ## 4. Numbers to remember
 | what | number |

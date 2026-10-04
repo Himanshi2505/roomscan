@@ -122,7 +122,7 @@ Full record: `docs/FIX_LOOP.md`. Each declaration was committed before its code;
 - **Sideways images without orientation metadata:** gravity is initialised from image up (D11). iPhone photos and videos always carry it.
 - **Damage:** zero-shot CLIP. After the audit, 2 single-view false positives remain on an undamaged room, and recall is unknown until the staged-damage room. Thresholds are a fix-loop candidate.
 - **Closed doors** read as wall; the protocol requires open doors.
-- **CPU time:** photo and video tiers run ~10 s per image with MoGe-L. A GPU makes this about 20× faster.
+- **CPU time:** MoGe-L takes ~10 s per image on this laptop. A 48 s video takes ~9.5 min (one inference per keyframe, D23). Smaller inputs don't help, because MoGe's cost is fixed by its token budget (tried and reverted). A GPU should be much faster but has not been measured here.
 - **Low light and wet-look floors:** LiDAR confidence drops (filtered at confidence 2), and MoGe degrades in the dark. ⏳ measured.
 - **Furniture as walls:** long furniture faces can split rooms. Faces with evidence of standing against a wall are excluded; free-standing furniture can still split a room (D21).
 - **Wide openings:** gaps wider than 1.6 m merge spaces into one room by design (open plan). A room with a very wide doorway reads as one space with the corridor.
