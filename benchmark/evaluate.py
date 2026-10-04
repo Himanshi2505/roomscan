@@ -106,6 +106,8 @@ def score_capture(cap: dict, res: dict, gt: dict) -> dict:
                 ceil.append({"room": gname, "gt": g["ceiling_height"], "pred": ch["value"],
                              "err": e, "covered": _cov(ch, g["ceiling_height"])})
                 cal.append((e, ch["sigma"]))
+        if not gt.get("openings_known", True):
+            continue          # GT deliberately omits openings: unscoreable, not "all phantom"
         pairs, missed, phantom = match_openings(r["openings"], g.get("openings", []))
         for i, j in pairs:
             m, truth = r["openings"][i]["width"], g["openings"][j]["width"]
@@ -237,6 +239,7 @@ def main(argv=None):
     ap.add_argument("--gt-dir", default=str(ROOT / "gt"),
                     help="ground-truth folder (benchmark/public_gt for third-party validation)")
     ap.add_argument("--out", default=str(ROOT / "out"), help="report/results folder")
+    ap.add_argument("--title", default="Benchmark report")
     a = ap.parse_args(argv)
     global OUT
     OUT = Path(a.out)
@@ -264,7 +267,7 @@ def main(argv=None):
     results = {"captures": scored, "repeatability": reps, "calibration_fit": k}
     (OUT / "results.json").write_text(json.dumps(results, indent=1, default=float))
     from benchmark.report import write_report
-    write_report(results, caps, OUT / "REPORT.md")
+    write_report(results, caps, OUT / "REPORT.md", title=a.title)
     print((OUT / "REPORT.md").read_text())
 
 

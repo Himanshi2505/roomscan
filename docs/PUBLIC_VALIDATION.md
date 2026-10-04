@@ -68,6 +68,18 @@ The clip is 60 fps, 48 s, and decodes upright via its rotation metadata.
 
 **Verdict:** the video tier **fails** the ±3% wall gate on this scene by a wide margin, and it is too slow on CPU for a live run. Its intervals widen instead of lying. Next candidates: scale and ceiling anchoring per keyframe, and fewer keyframes or a GPU.
 
+## Benchmark report (gates, repeatability, calibration, timing)
+
+`python -m benchmark.evaluate --captures benchmark/public_captures.json --gt-dir benchmark/public_gt --out benchmark/report_public`
+writes `benchmark/report_public/REPORT.md`:
+
+- **Ceiling gate:** PASS on both LiDAR recordings (worst 1.3 cm); FAIL with drift off (1.9 cm); video FAIL.
+- **Plan-level wall lengths:** FAIL, off by up to 1.7 m. Room segmentation splits or merges the room; the wall *faces* themselves are within 1 cm.
+- **Repeatability:** FAIL. Recording 2 covers different space. Ceiling spread 1.4 cm → **unrepeatable** (gate 1 cm).
+- **Openings:** not scored. The ground truth omits them (`openings_known: false`) because the jambs aren't visible.
+- **Calibration:** LiDAR k = 58, video k = 16. The intervals ignore layout errors. Not applied; see the technical report §5.
+- **Timing:** LiDAR 133–252 s per recording, video 144 s (cached MoGe; ~568 s live).
+
 ## Not covered by this data
 
 - photo tier on iPhone photos (stills from this scene are pending)

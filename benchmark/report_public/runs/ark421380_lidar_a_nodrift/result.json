@@ -1,0 +1,530 @@
+{
+ "schema_version": "1.0",
+ "capture": {
+  "id": "42445021",
+  "path": "data\\public\\stray\\42445021",
+  "device": null,
+  "n_inputs": 2862
+ },
+ "damage": [],
+ "concealed_flags": [],
+ "scope": [],
+ "tier": "lidar",
+ "calibrated": false,
+ "rooms": [
+  {
+   "id": "R1",
+   "name": "R1",
+   "polygon": [
+    [
+     -0.962,
+     -3.943
+    ],
+    [
+     -0.962,
+     0.138
+    ],
+    [
+     0.685,
+     0.138
+    ],
+    [
+     0.685,
+     -1.031
+    ],
+    [
+     0.939,
+     -1.031
+    ],
+    [
+     0.939,
+     -3.943
+    ]
+   ],
+   "floor_area": {
+    "value": 7.46,
+    "sigma": 0.159,
+    "ci90": [
+     7.2,
+     7.72
+    ]
+   },
+   "ceiling_height": {
+    "value": 2.311,
+    "sigma": 0.0085,
+    "ci90": [
+     2.297,
+     2.325
+    ]
+   },
+   "ceiling_observed": true,
+   "walls": [
+    {
+     "id": "R1.W1",
+     "start": [
+      -0.962,
+      -3.943
+     ],
+     "end": [
+      -0.962,
+      0.138
+     ],
+     "length": {
+      "value": 4.081,
+      "sigma": 0.0226,
+      "ci90": [
+       4.044,
+       4.118
+      ]
+     },
+     "height": {
+      "value": 2.311,
+      "sigma": 0.0085,
+      "ci90": [
+       2.297,
+       2.325
+      ]
+     },
+     "measured": true,
+     "openings": []
+    },
+    {
+     "id": "R1.W2",
+     "start": [
+      -0.962,
+      0.138
+     ],
+     "end": [
+      0.685,
+      0.138
+     ],
+     "length": {
+      "value": 1.647,
+      "sigma": 0.0353,
+      "ci90": [
+       1.589,
+       1.705
+      ]
+     },
+     "height": {
+      "value": 2.311,
+      "sigma": 0.0085,
+      "ci90": [
+       2.297,
+       2.325
+      ]
+     },
+     "measured": true,
+     "openings": []
+    },
+    {
+     "id": "R1.W3",
+     "start": [
+      0.685,
+      0.138
+     ],
+     "end": [
+      0.685,
+      -1.031
+     ],
+     "length": {
+      "value": 1.169,
+      "sigma": 0.0193,
+      "ci90": [
+       1.137,
+       1.201
+      ]
+     },
+     "height": {
+      "value": 2.311,
+      "sigma": 0.0085,
+      "ci90": [
+       2.297,
+       2.325
+      ]
+     },
+     "measured": false,
+     "openings": []
+    },
+    {
+     "id": "R1.W4",
+     "start": [
+      0.685,
+      -1.031
+     ],
+     "end": [
+      0.939,
+      -1.031
+     ],
+     "length": {
+      "value": 0.254,
+      "sigma": 0.035,
+      "ci90": [
+       0.196,
+       0.312
+      ]
+     },
+     "height": {
+      "value": 2.311,
+      "sigma": 0.0085,
+      "ci90": [
+       2.297,
+       2.325
+      ]
+     },
+     "measured": true,
+     "openings": []
+    },
+    {
+     "id": "R1.W5",
+     "start": [
+      0.939,
+      -1.031
+     ],
+     "end": [
+      0.939,
+      -3.943
+     ],
+     "length": {
+      "value": 2.912,
+      "sigma": 0.0209,
+      "ci90": [
+       2.878,
+       2.947
+      ]
+     },
+     "height": {
+      "value": 2.311,
+      "sigma": 0.0085,
+      "ci90": [
+       2.297,
+       2.325
+      ]
+     },
+     "measured": true,
+     "openings": [
+      "R1.O1"
+     ]
+    },
+    {
+     "id": "R1.W6",
+     "start": [
+      0.939,
+      -3.943
+     ],
+     "end": [
+      -0.962,
+      -3.943
+     ],
+     "length": {
+      "value": 1.901,
+      "sigma": 0.0198,
+      "ci90": [
+       1.868,
+       1.934
+      ]
+     },
+     "height": {
+      "value": 2.311,
+      "sigma": 0.0085,
+      "ci90": [
+       2.297,
+       2.325
+      ]
+     },
+     "measured": true,
+     "openings": []
+    }
+   ],
+   "openings": [
+    {
+     "id": "R1.O1",
+     "kind": "passage",
+     "wall_id": "R1.W5",
+     "width": {
+      "value": 2.384,
+      "sigma": 0.0147,
+      "ci90": [
+       2.36,
+       2.408
+      ]
+     },
+     "height": null,
+     "sill": null,
+     "center": [
+      0.939,
+      -2.712
+     ],
+     "outward": [
+      1.0,
+      0.0
+     ],
+     "connects_to": "R2"
+    }
+   ]
+  },
+  {
+   "id": "R2",
+   "name": "R2",
+   "polygon": [
+    [
+     2.058,
+     -3.943
+    ],
+    [
+     0.939,
+     -3.943
+    ],
+    [
+     0.939,
+     -1.875
+    ],
+    [
+     2.058,
+     -1.875
+    ]
+   ],
+   "floor_area": {
+    "value": 2.31,
+    "sigma": 0.1135,
+    "ci90": [
+     2.13,
+     2.5
+    ]
+   },
+   "ceiling_height": {
+    "value": 2.334,
+    "sigma": 0.0085,
+    "ci90": [
+     2.32,
+     2.348
+    ]
+   },
+   "ceiling_observed": true,
+   "walls": [
+    {
+     "id": "R2.W1",
+     "start": [
+      2.058,
+      -3.943
+     ],
+     "end": [
+      0.939,
+      -3.943
+     ],
+     "length": {
+      "value": 1.119,
+      "sigma": 0.0352,
+      "ci90": [
+       1.061,
+       1.177
+      ]
+     },
+     "height": {
+      "value": 2.334,
+      "sigma": 0.0085,
+      "ci90": [
+       2.32,
+       2.348
+      ]
+     },
+     "measured": true,
+     "openings": [
+      "R2.O1"
+     ]
+    },
+    {
+     "id": "R2.W2",
+     "start": [
+      0.939,
+      -3.943
+     ],
+     "end": [
+      0.939,
+      -1.875
+     ],
+     "length": {
+      "value": 2.068,
+      "sigma": 0.0355,
+      "ci90": [
+       2.01,
+       2.127
+      ]
+     },
+     "height": {
+      "value": 2.334,
+      "sigma": 0.0085,
+      "ci90": [
+       2.32,
+       2.348
+      ]
+     },
+     "measured": false,
+     "openings": []
+    },
+    {
+     "id": "R2.W3",
+     "start": [
+      0.939,
+      -1.875
+     ],
+     "end": [
+      2.058,
+      -1.875
+     ],
+     "length": {
+      "value": 1.119,
+      "sigma": 0.0352,
+      "ci90": [
+       1.061,
+       1.177
+      ]
+     },
+     "height": {
+      "value": 2.334,
+      "sigma": 0.0085,
+      "ci90": [
+       2.32,
+       2.348
+      ]
+     },
+     "measured": false,
+     "openings": [
+      "R2.O2"
+     ]
+    },
+    {
+     "id": "R2.W4",
+     "start": [
+      2.058,
+      -1.875
+     ],
+     "end": [
+      2.058,
+      -3.943
+     ],
+     "length": {
+      "value": 2.068,
+      "sigma": 0.0355,
+      "ci90": [
+       2.01,
+       2.127
+      ]
+     },
+     "height": {
+      "value": 2.334,
+      "sigma": 0.0085,
+      "ci90": [
+       2.32,
+       2.348
+      ]
+     },
+     "measured": true,
+     "openings": []
+    }
+   ],
+   "openings": [
+    {
+     "id": "R2.O1",
+     "kind": "window",
+     "wall_id": "R2.W1",
+     "width": {
+      "value": 0.408,
+      "sigma": 0.0169,
+      "ci90": [
+       0.381,
+       0.436
+      ]
+     },
+     "height": {
+      "value": 2.291,
+      "sigma": 0.03,
+      "ci90": [
+       2.242,
+       2.341
+      ]
+     },
+     "sill": {
+      "value": 0.85,
+      "sigma": 0.03,
+      "ci90": [
+       0.801,
+       0.899
+      ]
+     },
+     "center": [
+      1.181,
+      -3.943
+     ],
+     "outward": [
+      0.0,
+      -1.0
+     ],
+     "connects_to": null
+    },
+    {
+     "id": "R2.O2",
+     "kind": "door",
+     "wall_id": "R2.W3",
+     "width": {
+      "value": 1.059,
+      "sigma": 0.0231,
+      "ci90": [
+       1.021,
+       1.097
+      ]
+     },
+     "height": null,
+     "sill": null,
+     "center": [
+      1.489,
+      -1.875
+     ],
+     "outward": [
+      0.0,
+      1.0
+     ],
+     "connects_to": null
+    }
+   ]
+  }
+ ],
+ "adjacency": [
+  {
+   "rooms": [
+    "R1",
+    "R2"
+   ],
+   "via": "R1.O1",
+   "kind": "passage"
+  }
+ ],
+ "footprint_area": {
+  "value": 9.77,
+  "sigma": 0.1954,
+  "ci90": [
+   9.45,
+   10.09
+  ]
+ },
+ "levels": {
+  "floor_y": -1.5263,
+  "ceiling_y": 0.7924
+ },
+ "drift": {
+  "method": "none (poses as-is)",
+  "enabled": false,
+  "correction_m": null,
+  "loop_closures": 0
+ },
+ "timing_s": {
+  "fusion": 65.81,
+  "plan": 7.04,
+  "damage": 30.58,
+  "total": 132.5,
+  "wall_clock": 133.01
+ },
+ "warnings": [
+  "intervals use prior error model (no benchmark calibration found)"
+ ]
+}

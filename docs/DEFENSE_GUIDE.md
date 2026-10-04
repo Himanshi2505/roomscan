@@ -61,6 +61,7 @@ They come from **third-party** laser ground truth (Apple ARKitScenes), labelled 
 3. **Missed predictions, reported:** R1 at −1.29 instead of ±0.5 cm (a far-range ceiling bias remains), and the apartment's footprint moved +0.9%.
 
 ## 3. Weaknesses to state before they ask
+- **Intervals ignore room-layout errors.** On the third-party benchmark, the fitted k is 58 for LiDAR. Measurements are honest, but when a room is split, the polygon walls are a metre off with millimetre intervals. I found this with my own scorer and did *not* paper over it with k = 58. The fix is a layout-uncertainty term.
 - **No own benchmark captures, no Polycam head-to-head.** Those need a phone and a property; the harness is built and tested.
 - **The video tier is the least reliable.** On a real third-party walkthrough: walls off by 18%, ceiling +52 cm, 21 min on CPU. It fails the 3% gate. Say so plainly: its intervals were wide enough to contain the truth, so it doesn't produce confident garbage, but it isn't accurate yet. Monocular scale and the pose distortion are the causes.
 - **Room segmentation** can split rooms at free-standing furniture or merge them through wide openings. The measurement core is accurate; the room layer above it is the weak point.

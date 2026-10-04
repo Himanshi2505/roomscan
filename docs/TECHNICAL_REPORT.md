@@ -87,6 +87,8 @@ k per tier is fitted conformally: the smallest k such that ≥90% of ground-trut
 
 **Provisional:** video k = 2.1, from a stand-in clip against LiDAR (5 wall pairs needed 2.02; D18). The point is to avoid confident garbage before calibration exists.
 
+**Calibration finding (third-party benchmark, `benchmark/report_public/REPORT.md`):** fitting k on the public scene gives **LiDAR k = 58, video k = 16**. The intervals cover *measurement* noise (wall faces are within 1 cm of the laser), but **not room-layout errors**. When segmentation splits or merges a room, polygon walls are off by up to 1.7 m while claiming millimetre intervals: confident garbage at the plan level. k = 58 was **not** applied, because it would make every interval useless. The right fix is a layout-uncertainty term, for example widening edges that sit on virtual (unmeasured) walls or that segmentation could have cut differently. Not yet built.
+
 ## 6. Benchmark
 
 ⏳ **Our own benchmark** (gates at all three tiers, the repeatability table, the head-to-head, timing) requires captures that don't exist yet; the harness is built and tested (`benchmark/evaluate.py`).

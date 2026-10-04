@@ -1,0 +1,10 @@
+[
+  {"id": "ark421380_lidar_a", "tier": "lidar", "path": "data/public/stray/42445021", "gt": "arkitscenes_421380",
+   "room_map": {"R1": "room", "R2": "room"}},
+  {"id": "ark421380_lidar_b", "tier": "lidar", "path": "data/public/stray/42445022", "gt": "arkitscenes_421380",
+   "room_map": {"R1": "room", "R2": "room"}, "repeat_of": "ark421380_lidar_a"},
+  {"id": "ark421380_lidar_a_nodrift", "tier": "lidar", "path": "data/public/stray/42445021", "gt": "arkitscenes_421380",
+   "room_map": {"R1": "room", "R2": "room"}, "no_drift_ablation": true},
+  {"id": "ark421380_video", "tier": "video", "path": "data/public/arkitscenes/42445021/42445021.mov", "gt": "arkitscenes_421380",
+   "room_map": {"R1": "room", "R2": "room"}}
+]

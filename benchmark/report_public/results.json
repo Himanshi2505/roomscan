@@ -1,0 +1,804 @@
+{
+ "captures": {
+  "ark421380_lidar_a": {
+   "walls": [
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 1.622,
+     "err": -1.204,
+     "rel": -0.42604387827317763,
+     "covered": false,
+     "pred_wall_id": "R1.W2"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 4.122,
+     "err": 1.1429999999999998,
+     "rel": 0.3836858006042295,
+     "covered": false,
+     "pred_wall_id": "R1.W1"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.851,
+     "err": -0.9750000000000001,
+     "rel": -0.3450106157112527,
+     "covered": false,
+     "pred_wall_id": "R1.W6"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 2.912,
+     "err": -0.06700000000000017,
+     "rel": -0.022490768714333725,
+     "covered": false,
+     "pred_wall_id": "R1.W5"
+    },
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 1.119,
+     "err": -1.707,
+     "rel": -0.6040339702760085,
+     "covered": false,
+     "pred_wall_id": "R2.W1"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 2.912,
+     "err": -0.06700000000000017,
+     "rel": -0.022490768714333725,
+     "covered": false,
+     "pred_wall_id": "R2.W2"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.119,
+     "err": -1.707,
+     "rel": -0.6040339702760085,
+     "covered": false,
+     "pred_wall_id": "R2.W3"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 2.912,
+     "err": -0.06700000000000017,
+     "rel": -0.022490768714333725,
+     "covered": false,
+     "pred_wall_id": "R2.W4"
+    }
+   ],
+   "openings": [],
+   "ceiling": [
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.302,
+     "err": -0.0129999999999999,
+     "covered": true
+    },
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.309,
+     "err": -0.005999999999999783,
+     "covered": true
+    }
+   ],
+   "calibration": [
+    [
+     -1.204,
+     0.031
+    ],
+    [
+     1.1429999999999998,
+     0.015
+    ],
+    [
+     -0.9750000000000001,
+     0.0102
+    ],
+    [
+     -0.06700000000000017,
+     0.0122
+    ],
+    [
+     -0.0129999999999999,
+     0.0085
+    ],
+    [
+     -1.707,
+     0.0308
+    ],
+    [
+     -0.06700000000000017,
+     0.0122
+    ],
+    [
+     -1.707,
+     0.0308
+    ],
+    [
+     -0.06700000000000017,
+     0.0122
+    ],
+    [
+     -0.005999999999999783,
+     0.0085
+    ]
+   ],
+   "overlap_m2": 0.0,
+   "adjacency": {
+    "gt": [],
+    "pred": [
+     [
+      "room",
+      "room"
+     ]
+    ],
+    "correct": false,
+    "missing": [],
+    "extra": [
+     [
+      "room",
+      "room"
+     ]
+    ]
+   },
+   "footprint": {
+    "gt": 8.42,
+    "pred": 10.61,
+    "rel": 0.2600950118764845,
+    "covered": false
+   },
+   "timing_s": 139.71,
+   "gates": {
+    "ceiling_height": {
+     "value": 0.0129999999999999,
+     "pass": true,
+     "detail": "worst |error| per room (m)"
+    }
+   },
+   "tier": "lidar",
+   "drift": {
+    "method": "2D submap pose graph: ARKit odometry + ICP loop closures + Manhattan yaw prior + floor-anchored vertical correction",
+    "enabled": true,
+    "correction_m": 0.0197,
+    "loop_closures": 2,
+    "submaps": 6,
+    "max_yaw_correction_deg": 0.258,
+    "vertical_correction_m": 0.0486
+   }
+  },
+  "ark421380_lidar_b": {
+   "walls": [
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 1.098,
+     "err": -1.728,
+     "rel": -0.6114649681528662,
+     "covered": false,
+     "pred_wall_id": "R1.W1"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 2.273,
+     "err": -0.706,
+     "rel": -0.2369922792883518,
+     "covered": false,
+     "pred_wall_id": "R1.W2"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.098,
+     "err": -1.728,
+     "rel": -0.6114649681528662,
+     "covered": false,
+     "pred_wall_id": "R1.W3"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 2.273,
+     "err": -0.706,
+     "rel": -0.2369922792883518,
+     "covered": false,
+     "pred_wall_id": "R1.W4"
+    },
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 2.169,
+     "err": -0.657,
+     "rel": -0.23248407643312102,
+     "covered": false,
+     "pred_wall_id": "R2.W5"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 4.154,
+     "err": 1.1749999999999998,
+     "rel": 0.3944276602886874,
+     "covered": false,
+     "pred_wall_id": "R2.W4"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.719,
+     "err": -1.107,
+     "rel": -0.3917197452229299,
+     "covered": false,
+     "pred_wall_id": "R2.W3"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 3.187,
+     "err": 0.20799999999999974,
+     "rel": 0.06982208794897608,
+     "covered": false,
+     "pred_wall_id": "R2.W2"
+    }
+   ],
+   "openings": [],
+   "ceiling": [
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.302,
+     "err": -0.0129999999999999,
+     "covered": true
+    },
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.323,
+     "err": 0.008000000000000007,
+     "covered": true
+    }
+   ],
+   "calibration": [
+    [
+     -1.728,
+     0.0308
+    ],
+    [
+     -0.706,
+     0.0109
+    ],
+    [
+     -1.728,
+     0.0308
+    ],
+    [
+     -0.706,
+     0.0109
+    ],
+    [
+     -0.0129999999999999,
+     0.0085
+    ],
+    [
+     -0.657,
+     0.0313
+    ],
+    [
+     1.1749999999999998,
+     0.0151
+    ],
+    [
+     -1.107,
+     0.0099
+    ],
+    [
+     0.20799999999999974,
+     0.0321
+    ],
+    [
+     0.008000000000000007,
+     0.0085
+    ]
+   ],
+   "overlap_m2": 0.0,
+   "adjacency": {
+    "gt": [],
+    "pred": [
+     [
+      "room",
+      "room"
+     ]
+    ],
+    "correct": false,
+    "missing": [],
+    "extra": [
+     [
+      "room",
+      "room"
+     ]
+    ]
+   },
+   "footprint": {
+    "gt": 8.42,
+    "pred": 11.58,
+    "rel": 0.3752969121140143,
+    "covered": false
+   },
+   "timing_s": 251.56,
+   "gates": {
+    "ceiling_height": {
+     "value": 0.0129999999999999,
+     "pass": true,
+     "detail": "worst |error| per room (m)"
+    }
+   },
+   "tier": "lidar",
+   "drift": {
+    "method": "2D submap pose graph: ARKit odometry + ICP loop closures + Manhattan yaw prior + floor-anchored vertical correction",
+    "enabled": true,
+    "correction_m": 2.4208,
+    "loop_closures": 7,
+    "submaps": 16,
+    "max_yaw_correction_deg": 22.752,
+    "vertical_correction_m": 0.0557
+   }
+  },
+  "ark421380_lidar_a_nodrift": {
+   "walls": [
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 1.647,
+     "err": -1.179,
+     "rel": -0.4171974522292994,
+     "covered": false,
+     "pred_wall_id": "R1.W2"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 4.081,
+     "err": 1.1020000000000003,
+     "rel": 0.36992279288351804,
+     "covered": false,
+     "pred_wall_id": "R1.W1"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.901,
+     "err": -0.925,
+     "rel": -0.3273177636234961,
+     "covered": false,
+     "pred_wall_id": "R1.W6"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 2.912,
+     "err": -0.06700000000000017,
+     "rel": -0.022490768714333725,
+     "covered": false,
+     "pred_wall_id": "R1.W5"
+    },
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 1.119,
+     "err": -1.707,
+     "rel": -0.6040339702760085,
+     "covered": false,
+     "pred_wall_id": "R2.W1"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 2.068,
+     "err": -0.911,
+     "rel": -0.30580731789191,
+     "covered": false,
+     "pred_wall_id": "R2.W2"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.119,
+     "err": -1.707,
+     "rel": -0.6040339702760085,
+     "covered": false,
+     "pred_wall_id": "R2.W3"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 2.068,
+     "err": -0.911,
+     "rel": -0.30580731789191,
+     "covered": false,
+     "pred_wall_id": "R2.W4"
+    }
+   ],
+   "openings": [],
+   "ceiling": [
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.311,
+     "err": -0.0040000000000000036,
+     "covered": true
+    },
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.334,
+     "err": 0.019000000000000128,
+     "covered": false
+    }
+   ],
+   "calibration": [
+    [
+     -1.179,
+     0.0353
+    ],
+    [
+     1.1020000000000003,
+     0.0226
+    ],
+    [
+     -0.925,
+     0.0198
+    ],
+    [
+     -0.06700000000000017,
+     0.0209
+    ],
+    [
+     -0.0040000000000000036,
+     0.0085
+    ],
+    [
+     -1.707,
+     0.0352
+    ],
+    [
+     -0.911,
+     0.0355
+    ],
+    [
+     -1.707,
+     0.0352
+    ],
+    [
+     -0.911,
+     0.0355
+    ],
+    [
+     0.019000000000000128,
+     0.0085
+    ]
+   ],
+   "overlap_m2": 0.0,
+   "adjacency": {
+    "gt": [],
+    "pred": [
+     [
+      "room",
+      "room"
+     ]
+    ],
+    "correct": false,
+    "missing": [],
+    "extra": [
+     [
+      "room",
+      "room"
+     ]
+    ]
+   },
+   "footprint": {
+    "gt": 8.42,
+    "pred": 9.77,
+    "rel": 0.1603325415676959,
+    "covered": false
+   },
+   "timing_s": 132.5,
+   "gates": {
+    "ceiling_height": {
+     "value": 0.019000000000000128,
+     "pass": false,
+     "detail": "worst |error| per room (m)"
+    }
+   },
+   "tier": "lidar",
+   "drift": {
+    "method": "none (poses as-is)",
+    "enabled": false,
+    "correction_m": null,
+    "loop_closures": 0
+   }
+  },
+  "ark421380_video": {
+   "walls": [
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 2.173,
+     "err": -0.653,
+     "rel": -0.2310686482661005,
+     "covered": false,
+     "pred_wall_id": "R1.W4"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 2.467,
+     "err": -0.512,
+     "rel": -0.17186975495132595,
+     "covered": true,
+     "pred_wall_id": "R1.W5"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.063,
+     "err": -1.7630000000000001,
+     "rel": -0.6238499646142959,
+     "covered": false,
+     "pred_wall_id": "R1.W6"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 4.077,
+     "err": 1.0979999999999999,
+     "rel": 0.36858006042296065,
+     "covered": false,
+     "pred_wall_id": "R1.W7"
+    },
+    {
+     "room": "room",
+     "wall": "N",
+     "gt": 2.826,
+     "pred": 1.987,
+     "err": -0.839,
+     "rel": -0.29688605803255486,
+     "covered": false,
+     "pred_wall_id": "R2.W1"
+    },
+    {
+     "room": "room",
+     "wall": "E",
+     "gt": 2.979,
+     "pred": 2.206,
+     "err": -0.7730000000000001,
+     "rel": -0.2594830480026855,
+     "covered": false,
+     "pred_wall_id": "R2.W2"
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "gt": 2.826,
+     "pred": 1.987,
+     "err": -0.839,
+     "rel": -0.29688605803255486,
+     "covered": false,
+     "pred_wall_id": "R2.W3"
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "gt": 2.979,
+     "pred": 2.206,
+     "err": -0.7730000000000001,
+     "rel": -0.2594830480026855,
+     "covered": false,
+     "pred_wall_id": "R2.W4"
+    }
+   ],
+   "openings": [],
+   "ceiling": [
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.522,
+     "err": 0.20699999999999985,
+     "covered": false
+    },
+    {
+     "room": "room",
+     "gt": 2.315,
+     "pred": 2.885,
+     "err": 0.5699999999999998,
+     "covered": false
+    }
+   ],
+   "calibration": [
+    [
+     -0.653,
+     0.1532
+    ],
+    [
+     -0.512,
+     0.1696
+    ],
+    [
+     -1.7630000000000001,
+     0.0791
+    ],
+    [
+     1.0979999999999999,
+     0.2755
+    ],
+    [
+     0.20699999999999985,
+     0.0212
+    ],
+    [
+     -0.839,
+     0.1356
+    ],
+    [
+     -0.7730000000000001,
+     0.1501
+    ],
+    [
+     -0.839,
+     0.1356
+    ],
+    [
+     -0.7730000000000001,
+     0.1501
+    ],
+    [
+     0.5699999999999998,
+     0.0212
+    ]
+   ],
+   "overlap_m2": 0.0,
+   "adjacency": {
+    "gt": [],
+    "pred": [
+     [
+      "room",
+      "room"
+     ]
+    ],
+    "correct": false,
+    "missing": [],
+    "extra": [
+     [
+      "room",
+      "room"
+     ]
+    ]
+   },
+   "footprint": {
+    "gt": 8.42,
+    "pred": 15.06,
+    "rel": 0.7885985748218528,
+    "covered": true
+   },
+   "timing_s": 143.7,
+   "gates": {
+    "ceiling_height": {
+     "value": 0.5699999999999998,
+     "pass": false,
+     "detail": "worst |error| per room (m)"
+    },
+    "wall_lengths": {
+     "value": 0.6238499646142959,
+     "pass": false,
+     "detail": "worst relative error; CI coverage 12%"
+    }
+   },
+   "tier": "video",
+   "drift": {
+    "method": "2D keyframe pose graph: visual-metric odometry + feature loop closures + Manhattan yaw prior",
+    "enabled": true,
+    "correction_m": 1.0222,
+    "loop_closures": 4,
+    "segments": 1,
+    "kept_keyframes": 56,
+    "total_keyframes": 56,
+    "distortion_rel": 0.0663
+   }
+  }
+ },
+ "repeatability": {
+  "ark421380_lidar_b": {
+   "walls": [
+    {
+     "room": "room",
+     "wall": "E",
+     "a": 2.912,
+     "b": 4.154,
+     "diff": 1.242,
+     "pass": false
+    },
+    {
+     "room": "room",
+     "wall": "N",
+     "a": 1.119,
+     "b": 2.169,
+     "diff": 1.05,
+     "pass": false
+    },
+    {
+     "room": "room",
+     "wall": "S",
+     "a": 1.119,
+     "b": 1.719,
+     "diff": 0.6000000000000001,
+     "pass": false
+    },
+    {
+     "room": "room",
+     "wall": "W",
+     "a": 2.912,
+     "b": 3.187,
+     "diff": 0.2749999999999999,
+     "pass": false
+    }
+   ],
+   "pass": false,
+   "ceiling": [
+    {
+     "room": "room",
+     "spread": 0.01399999999999979,
+     "bias": 0.0009999999999998899,
+     "verdict": "unrepeatable"
+    }
+   ]
+  }
+ },
+ "calibration_fit": {
+  "lidar": {
+   "k": 58.10834972286787,
+   "n": 20
+  },
+  "video": {
+   "k": 16.344554682571538,
+   "n": 10
+  }
+ }
+}

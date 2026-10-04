@@ -58,5 +58,6 @@
   ]
  },
  "laser_ceiling_height": 2.3149,
- "note_frames": "gt_faces positions are in the laser frame produced by tools/laser_gt.py load_aligned()"
+ "note_frames": "gt_faces positions are in the laser frame produced by tools/laser_gt.py load_aligned()",
+ "openings_known": false
 }
