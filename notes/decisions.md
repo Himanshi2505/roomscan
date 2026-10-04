@@ -260,3 +260,9 @@ tall furniture face 0.41 m inside the west wall is burned in as a wall.
   footprint 13.38 -> 15.06 m2 (LiDAR 10.61): further off; distortion 8.6 -> 6.6%.
   Accuracy is poor either way; the trade was taken for a 2.2x speed-up.
 - Still above the 5 min target.
+- A2 (tried, reverted): video MoGe + KLT at 480 px instead of 640. Fresh-cache
+  run: 1,215 s (slower than A1's 568 s despite 46 vs 56 calls), tracking broke
+  into 3 segments (28/46 keyframes kept), wall error 17.4 -> 21.5%.
+  Wrong premise: MoGe's compute is fixed by its token budget (resolution level,
+  already 0), not input pixels, so smaller inputs don't speed it up; they only
+  hurt KLT. The slower wall time also suggests machine load during that run.
